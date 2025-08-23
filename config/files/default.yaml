@@ -1,0 +1,26 @@
+server:
+  port: 8080
+  gracefulShutdownTimeoutInSeconds: 20 
+
+database:
+  postgres:
+    host: localhost
+    username: go_bank
+    password: password
+    databaseName: go_bank
+    port: 5432
+    options:
+      caCertificate:
+      maxOpenConnections: 20 # must always be less than ((number of servers) * (value of `max_connections` for the postgres instance))
+      maxIdleConnections: 10 # must always be less than the value of maxOpenConnections
+      connectionMaxLifetimeInSeconds: 300
+      dialTimeoutInSeconds: 5
+      readTimeoutInSeconds: 10
+      writeTimeoutInSeconds: 10
+
+cache:
+  redis:
+    host: localhost
+    port: 6379
+    password: password
+    dbIndex: 0
