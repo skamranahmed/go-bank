@@ -1,0 +1,6 @@
+postgres:
+  host: localhost
+  username: go_bank
+  password: password
+  databaseName: go_bank
+  port: 5432
