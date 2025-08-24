@@ -15,8 +15,6 @@ type userRepository struct {
 	db *bun.DB
 }
 
-
-
 func NewUserRepository(db *bun.DB) UserRepository {
 	return &userRepository{
 		db: db,
@@ -37,12 +35,12 @@ func (r *userRepository) CreateUser(requestCtx context.Context, dbExecutor bun.I
 		if strings.Contains(err.Error(), "unique constraint") {
 			return nil, &server.ApiError{
 				HttpStatusCode: http.StatusConflict,
-				Message:        "a user with the provided username or email already exists",
+				Message:        "This username or email is already in use. Please choose another.",
 			}
 		}
 		return nil, &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
-			Message:        "something went wrong while creating the user",
+			Message:        "Unable to create user at this time. Please try again later.",
 		}
 	}
 

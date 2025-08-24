@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/skamranahmed/go-bank/cmd/server"
@@ -33,7 +32,7 @@ func (r *accountRepository) CreateAccount(requestCtx context.Context, dbExecutor
 		logger.Warnf("error while creating new account for userID: %+v, error: %+v", account.UserID, err)
 		return &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
-			Message:        fmt.Sprintf("something went wrong while creating the account for user id: %v", account.UserID),
+			Message:        "We couldn't create your account at the moment. Please try again later.",
 		}
 	}
 

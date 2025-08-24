@@ -2,10 +2,14 @@ package service
 
 import (
 	"context"
+	"net/http"
 
+	"github.com/alexedwards/argon2id"
+	"github.com/skamranahmed/go-bank/cmd/server"
 	"github.com/skamranahmed/go-bank/internal/user/dto"
 	"github.com/skamranahmed/go-bank/internal/user/model"
 	"github.com/skamranahmed/go-bank/internal/user/repository"
+	"github.com/skamranahmed/go-bank/pkg/logger"
 	"github.com/uptrace/bun"
 )
 
@@ -26,13 +30,22 @@ func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB,
 		dbExecutor = u.db
 	}
 
+	hashedPassword, err := argon2id.CreateHash(password, argon2id.DefaultParams)
+	if err != nil {
+		logger.Errorf("error hashing the password, error: %v", err)
+		return nil, &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "Unable to process your request. Please try again later.",
+		}
+	}
+
 	user := &model.User{
 		Email:    email,
-		Password: password, // TODO: hash this
+		Password: hashedPassword,
 		Username: username,
 	}
 
-	user, err := u.userRepository.CreateUser(requestCtx, dbExecutor, user)
+	user, err = u.userRepository.CreateUser(requestCtx, dbExecutor, user)
 	if err != nil {
 		return nil, err
 	}

@@ -59,7 +59,7 @@ func (s *authenticationService) CreateAccessToken(requestCtx context.Context, us
 		logger.Errorf("failed to cache access token, error: %+v", err)
 		return "", &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
-			Message:        "something went wrong during token creation",
+			Message:        "Unable to generate access token. Please try again later.",
 		}
 	}
 
@@ -80,7 +80,7 @@ func (s *authenticationService) createToken(payload any, secretSigningKey string
 		logger.Errorf("unsupported payload type passed for token creation: %+v", payload)
 		return "", &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
-			Message:        "something went wrong during token creation",
+			Message:        "Unable to generate access token. Please try again later.",
 		}
 	}
 

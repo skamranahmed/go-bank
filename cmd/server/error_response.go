@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +13,7 @@ type ApiError struct {
 }
 
 func (e *ApiError) Error() string {
-	return fmt.Sprintf(e.Message)
+	return e.Message
 }
 
 func SendErrorResponse(ginCtx *gin.Context, err error) {
