@@ -31,6 +31,10 @@ const (
 	redisPort     = "REDIS_PORT"
 	redisPassword = "REDIS_PASSWORD"
 	redisDbIndex  = "REDIS_DB_INDEX"
+
+	// auth
+	authAccessTokenExpiryDurationInSeconds = "AUTH_ACCESS_TOKEN_EXPIRY_DURATION_IN_SECONDS"
+	authAccessTokenSecretSigningKey        = "AUTH_ACCESS_TOKEN_SECRET_SIGNING_KEY"
 )
 
 func getEnvironment() string {
@@ -164,4 +168,17 @@ func getRedisDbIndex() int {
 		return -1
 	}
 	return dbIndex
+}
+
+func getAccessTokenExpiryDurationInSeconds() int {
+	duration, err := strconv.Atoi(os.Getenv(authAccessTokenExpiryDurationInSeconds))
+	if err != nil {
+		// since 0 is a valid expiry duration, to indicate that an error has occured, we are returning -1
+		return -1
+	}
+	return duration
+}
+
+func getAccessTokenSecretSigningKey() string {
+	return os.Getenv(authAccessTokenSecretSigningKey)
 }

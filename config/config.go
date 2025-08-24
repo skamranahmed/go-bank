@@ -163,3 +163,19 @@ func GetRedisConfig() RedisConfig {
 
 	return redisConfig
 }
+
+func GetAuthConfig() AuthConfig {
+	authConfig := loadConfig().Auth
+
+	accessTokenExpiryDurationInSeconds := getAccessTokenExpiryDurationInSeconds()
+	if accessTokenExpiryDurationInSeconds != -1 {
+		authConfig.AccessTokenExpiryDurationInSeconds = accessTokenExpiryDurationInSeconds
+	}
+
+	accessTokenSecretSigningKey := getAccessTokenSecretSigningKey()
+	if accessTokenSecretSigningKey != "" {
+		authConfig.AccessTokenSecretSigningKey = accessTokenSecretSigningKey
+	}
+
+	return authConfig
+}

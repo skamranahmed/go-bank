@@ -5,6 +5,7 @@ type Config struct {
 	Server      ServerConfig   `koanf:"server"`
 	Database    DatabaseConfig `koanf:"database"`
 	Cache       CacheConfig    `koanf:"cache"`
+	Auth        AuthConfig     `koanf:"auth"`
 }
 
 type ServerConfig struct {
@@ -42,4 +43,9 @@ type RedisConfig struct {
 	Port     int    `koanf:"port"`
 	Password string `koanf:"password"`
 	DbIndex  int    `koanf:"dbIndex"`
+}
+
+type AuthConfig struct {
+	AccessTokenExpiryDurationInSeconds int    `koanf:"accessTokenExpiryDurationInSeconds"`
+	AccessTokenSecretSigningKey        string `koanf:"accessTokenSecretSigningKey"`
 }

@@ -1,42 +1,34 @@
 package internal
 
 import (
-	"fmt"
-
-	"github.com/redis/go-redis/v9"
-	"github.com/skamranahmed/go-bank/config"
+	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	"github.com/skamranahmed/go-bank/internal/healthz"
+	userRepository "github.com/skamranahmed/go-bank/internal/user/repository"
+	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	"github.com/skamranahmed/go-bank/pkg/cache"
-	"github.com/skamranahmed/go-bank/pkg/database"
+	"github.com/uptrace/bun"
 )
 
 type Services struct {
-	HealthzService healthz.HealthzService
+	HealthzService        healthz.HealthzService
+	AuthenticationService authenticationService.AuthenticationService
+	UserService           userService.UserService
 }
 
-func BootstrapServices() (*Services, error) {
-	// initialize postgres
-	db, err := database.NewPostgresClient()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	// initialize redis
-	redisConfig := config.GetRedisConfig()
-	cacheClient, err := cache.NewRedisClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
-		Password: redisConfig.Password,
-		DB:       redisConfig.DbIndex,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer cacheClient.Close()
-
+func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient) (*Services, error) {
+	// healthz service
 	healthzService := healthz.NewHealthzService(db, cacheClient)
 
+	// user service
+	userRepository := userRepository.NewUserRepository(db)
+	userService := userService.NewUserService(db, userRepository)
+
+	// authentication service
+	authenticationService := authenticationService.NewAuthenticationService(db, cacheClient)
+
 	return &Services{
-		HealthzService: healthzService,
+		HealthzService:        healthzService,
+		AuthenticationService: authenticationService,
+		UserService:           userService,
 	}, nil
 }

@@ -24,3 +24,7 @@ cache:
     port: 6379
     password: password
     dbIndex: 0
+
+auth:
+  accessTokenExpiryDurationInSeconds: 900 # 15 mins (15 * 60 = 900 secs)
+  accessTokenSecretSigningKey: abc123
