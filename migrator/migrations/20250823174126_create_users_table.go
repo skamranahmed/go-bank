@@ -14,7 +14,7 @@ func init() {
 func upCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
 	// This code is executed when the migration is applied.
 	_, err := tx.Exec(`
-		CREATE TABLE "users" (
+		CREATE TABLE users (
 			id UUID PRIMARY KEY NOT NULL DEFAULT GEN_RANDOM_UUID(),
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -28,6 +28,6 @@ func upCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
 
 func downCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
 	// This code is executed when the migration is rolled back.
-	_, err := tx.Exec(`DROP TABLE "users"`)
+	_, err := tx.Exec(`DROP TABLE users`)
 	return err
 }

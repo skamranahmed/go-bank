@@ -23,7 +23,7 @@ func SendErrorResponse(ginCtx *gin.Context, err error) {
 		sendErrorResponse(ginCtx, apiErr.HttpStatusCode, apiErr.Message)
 		return
 	}
-	ginCtx.Status(http.StatusInternalServerError)
+	sendErrorResponse(ginCtx, http.StatusInternalServerError, err.Error())
 }
 
 func sendErrorResponse(ginCtx *gin.Context, httpStatusCode int, customMessage any) {

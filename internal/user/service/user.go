@@ -14,10 +14,6 @@ type userService struct {
 	userRepository repository.UserRepository
 }
 
-type UserService interface {
-	Create(requestCtx context.Context, dbExecutor bun.IDB, email string, password string, username string) (*dto.CreateUserDto, error)
-}
-
 func NewUserService(db *bun.DB, userRepository repository.UserRepository) UserService {
 	return &userService{
 		db:             db,
@@ -25,7 +21,7 @@ func NewUserService(db *bun.DB, userRepository repository.UserRepository) UserSe
 	}
 }
 
-func (u *userService) Create(requestCtx context.Context, dbExecutor bun.IDB, email string, password string, username string) (*dto.CreateUserDto, error) {
+func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB, email string, password string, username string) (*dto.CreateUserDto, error) {
 	if dbExecutor == nil {
 		dbExecutor = u.db
 	}
@@ -36,7 +32,7 @@ func (u *userService) Create(requestCtx context.Context, dbExecutor bun.IDB, ema
 		Username: username,
 	}
 
-	user, err := u.userRepository.Create(requestCtx, dbExecutor, user)
+	user, err := u.userRepository.CreateUser(requestCtx, dbExecutor, user)
 	if err != nil {
 		return nil, err
 	}

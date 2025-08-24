@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/skamranahmed/go-bank/cmd/server"
+	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
@@ -17,6 +18,7 @@ type authenticationController struct {
 	db                    *bun.DB
 	authenticationService authenticationService.AuthenticationService
 	userService           userService.UserService
+	accountService        accountService.AccountService
 }
 
 func newAuthenticationController(dependency Dependency) AuthenticationController {
@@ -24,6 +26,7 @@ func newAuthenticationController(dependency Dependency) AuthenticationController
 		db:                    dependency.Db,
 		authenticationService: dependency.AuthenticationService,
 		userService:           dependency.UserService,
+		accountService:        dependency.AccountService,
 	}
 }
 
@@ -41,12 +44,17 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	err := c.db.RunInTx(requestCtx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 	}, func(ctx context.Context, tx bun.Tx) error {
-		userDto, err := c.userService.Create(requestCtx, tx, payload.Data.Email, payload.Data.Password, payload.Data.Username)
+		// create user record
+		userDto, err := c.userService.CreateUser(requestCtx, tx, payload.Data.Email, payload.Data.Password, payload.Data.Username)
 		if err != nil {
 			return err
 		}
 
-		// TODO: create account within the same transaction
+		// create an account for user
+		err = c.accountService.CreateAccount(requestCtx, tx, userDto.ID)
+		if err != nil {
+			return err
+		}
 
 		/*
 			The access token creation is included within the database transaction

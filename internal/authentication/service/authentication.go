@@ -20,10 +20,6 @@ type authenticationService struct {
 	cacheClient cache.CacheClient
 }
 
-type AuthenticationService interface {
-	CreateAccessToken(requestCtx context.Context, userID string) (string, error)
-}
-
 func NewAuthenticationService(db *bun.DB, cacheClient cache.CacheClient) AuthenticationService {
 	return &authenticationService{
 		db:          db,

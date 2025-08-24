@@ -15,9 +15,7 @@ type userRepository struct {
 	db *bun.DB
 }
 
-type UserRepository interface {
-	Create(requestCtx context.Context, dbExecutor bun.IDB, user *model.User) (*model.User, error)
-}
+
 
 func NewUserRepository(db *bun.DB) UserRepository {
 	return &userRepository{
@@ -25,7 +23,7 @@ func NewUserRepository(db *bun.DB) UserRepository {
 	}
 }
 
-func (r *userRepository) Create(requestCtx context.Context, dbExecutor bun.IDB, user *model.User) (*model.User, error) {
+func (r *userRepository) CreateUser(requestCtx context.Context, dbExecutor bun.IDB, user *model.User) (*model.User, error) {
 	if dbExecutor == nil {
 		dbExecutor = r.db
 	}

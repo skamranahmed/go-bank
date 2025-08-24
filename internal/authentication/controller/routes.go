@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	"github.com/uptrace/bun"
@@ -11,6 +12,7 @@ type Dependency struct {
 	Db                    *bun.DB
 	AuthenticationService authenticationService.AuthenticationService
 	UserService           userService.UserService
+	AccountService        accountService.AccountService
 }
 
 func Register(router *gin.Engine, dependency Dependency) {
