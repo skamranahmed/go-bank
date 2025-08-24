@@ -1,6 +1,6 @@
-package authentication
+package dto
 
-type signUpRequest struct {
+type SignUpRequest struct {
 	Data struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=8"`
@@ -8,6 +8,6 @@ type signUpRequest struct {
 	} `json:"data" binding:"required"`
 }
 
-type signUpResponse struct {
+type SignUpResponse struct {
 	AccessToken string `json:"access_token"`
 }

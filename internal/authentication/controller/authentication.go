@@ -1,4 +1,4 @@
-package authentication
+package controller
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/skamranahmed/go-bank/cmd/server"
+	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	"github.com/uptrace/bun"
@@ -29,7 +30,7 @@ func newAuthenticationController(dependency Dependency) AuthenticationController
 func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	requestCtx := ginCtx.Request.Context()
 
-	var payload signUpRequest
+	var payload dto.SignUpRequest
 	isSuccess := server.BindAndValidateIncomingRequestBody(ginCtx, &payload)
 	if !isSuccess {
 		return
@@ -77,7 +78,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		return
 	}
 
-	server.SendSuccessResponse(ginCtx, http.StatusOK, signUpResponse{
+	server.SendSuccessResponse(ginCtx, http.StatusOK, dto.SignUpResponse{
 		AccessToken: accessToken,
 	})
 }

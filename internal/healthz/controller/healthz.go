@@ -1,23 +1,24 @@
-package healthz
+package controller
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	healthzService "github.com/skamranahmed/go-bank/internal/healthz/service"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 )
 
-func Register(router *gin.Engine, service HealthzService) {
+func Register(router *gin.Engine, service healthzService.HealthzService) {
 	healthzController := newHealthzController(service)
 	router.GET("/healthz", healthzController.CheckHealth)
 	router.GET("/db-ping", healthzController.DbPing)
 }
 
 type healthzController struct {
-	service HealthzService
+	service healthzService.HealthzService
 }
 
-func newHealthzController(service HealthzService) HealthzController {
+func newHealthzController(service healthzService.HealthzService) HealthzController {
 	return &healthzController{
 		service: service,
 	}

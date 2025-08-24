@@ -2,7 +2,7 @@ package internal
 
 import (
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
-	"github.com/skamranahmed/go-bank/internal/healthz"
+	healthzService "github.com/skamranahmed/go-bank/internal/healthz/service"
 	userRepository "github.com/skamranahmed/go-bank/internal/user/repository"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	"github.com/skamranahmed/go-bank/pkg/cache"
@@ -10,14 +10,14 @@ import (
 )
 
 type Services struct {
-	HealthzService        healthz.HealthzService
+	HealthzService        healthzService.HealthzService
 	AuthenticationService authenticationService.AuthenticationService
 	UserService           userService.UserService
 }
 
 func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient) (*Services, error) {
 	// healthz service
-	healthzService := healthz.NewHealthzService(db, cacheClient)
+	healthzService := healthzService.NewHealthzService(db, cacheClient)
 
 	// user service
 	userRepository := userRepository.NewUserRepository(db)

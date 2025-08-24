@@ -1,4 +1,4 @@
-package healthz
+package service
 
 import (
 	"github.com/skamranahmed/go-bank/pkg/cache"
