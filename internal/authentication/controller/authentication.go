@@ -86,7 +86,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		return
 	}
 
-	server.SendSuccessResponse(ginCtx, http.StatusOK, dto.SignUpResponse{
+	server.SendSuccessResponse(ginCtx, http.StatusCreated, dto.SignUpResponse{
 		AccessToken: accessToken,
 	})
 }

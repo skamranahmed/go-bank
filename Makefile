@@ -30,7 +30,7 @@ TEST_FORMAT=testdox
 # Override with verbose=true
 # eg:
 # - make test verbose=true
-# - make test-pkg pkg=./tests/healthz verbose=true
+# - make test-pkgs pkgs=./tests/healthz verbose=true
 # - make test-one pkg=./tests/healthz name=Test_CheckHealth verbose=true
 ifeq ($(verbose),true)
 	TEST_FORMAT=standard-verbose
@@ -40,15 +40,22 @@ endif
 .PHONY: test
 test:
 	go clean -testcache
-	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg ./...
+    # Force sequential test package execution to prevent extensive resource consumption
+    # Without `-p 1`, multiple test packages (authentication, healthz) would run concurrently,
+    # each spinning up separate test containers and consuming excessive resources 	 	
+	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg -- -p 1 -v ./...
 
-# Run all tests in a specific package
-# eg: make test-pkg pkg=./tests/healthz
-.PHONY: test-pkg
-test-pkg:
-	test -n "$(pkg)" || (echo "Missing argument: pkg. Example: make test-pkg pkg=./tests/healthz" && exit 1)
+# Run all tests in a specific package or multiple packages
+# eg: make test-pkgs pkgs=./tests/healthz
+# eg: make test-pkgs pkgs="./tests/authentication ./tests/healthz"
+.PHONY: test-pkgs
+test-pkgs:
+	test -n "$(pkgs)" || (echo "Missing argument: pkg. Example: make test-pkg pkg=./tests/healthz" && exit 1)
 	go clean -testcache
-	gotestsum --format standard-verbose --format-icons hivis --format-hide-empty-pkg $(pkg)
+    # Force sequential test package execution to prevent extensive resource consumption
+    # Without `-p 1`, multiple test packages (authentication, healthz) would run concurrently,
+    # each spinning up separate test containers and consuming excessive resources
+	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg -- -p 1 $(pkgs)
 
 # Run a specific test in a specific package
 # eg: make test-one pkg=./tests/healthz name=Test_CheckHealth
@@ -57,4 +64,4 @@ test-one:
 	test -n "$(pkg)" || (echo "Missing argument: pkg. Example: make test-one pkg=./tests/healthz name=Test_CheckHealth" && exit 1)
 	test -n "$(name)" || (echo "Missing argument: name. Example: make test-one pkg=./tests/healthz name=Test_CheckHealth" && exit 1)
 	go clean -testcache
-	gotestsum --format standard-verbose --format-icons hivis --format-hide-empty-pkg $(pkg) -run $(name)
+	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg $(pkg) -run $(name)
