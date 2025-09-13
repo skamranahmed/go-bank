@@ -8,40 +8,38 @@ import (
 	"github.com/skamranahmed/go-bank/pkg/logger"
 )
 
-func Register(router *gin.Engine, service healthzService.HealthzService) {
-	healthzController := newHealthzController(service)
-	router.GET("/healthz", healthzController.CheckHealth)
-	router.GET("/db-ping", healthzController.DbPing)
-}
-
 type healthzController struct {
 	service healthzService.HealthzService
 }
 
-func newHealthzController(service healthzService.HealthzService) HealthzController {
+func newHealthzController(dependency Dependency) HealthzController {
 	return &healthzController{
-		service: service,
+		service: dependency.HealthzService,
 	}
 }
 
 func (c *healthzController) CheckHealth(ginCtx *gin.Context) {
-	ginCtx.JSON(http.StatusOK, gin.H{
-		"status": "ok",
-	})
-}
-
-func (c *healthzController) DbPing(ginCtx *gin.Context) {
-	// check readiness
+	// check db readiness
 	err := c.service.DbPing()
 	if err != nil {
 		logger.Errorf("unable to connect to postgres db, error: %+v", err)
 		ginCtx.JSON(http.StatusInternalServerError, gin.H{
-			"status": "not ok",
+			"status": "DB_NOT_OK",
+		})
+		return
+	}
+
+	// check cache readiness
+	err = c.service.CachePing()
+	if err != nil {
+		logger.Errorf("unable to connect to redis, error: %+v", err)
+		ginCtx.JSON(http.StatusInternalServerError, gin.H{
+			"status": "CACHE_NOT_OK",
 		})
 		return
 	}
 
 	ginCtx.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status": "ALL_OK",
 	})
 }

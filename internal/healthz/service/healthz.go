@@ -20,3 +20,7 @@ func NewHealthzService(dbClient *bun.DB, cacheClient cache.CacheClient) HealthzS
 func (h *healthzService) DbPing() error {
 	return h.dbClient.Ping()
 }
+
+func (h *healthzService) CachePing() error {
+	return  h.cacheClient.Ping()
+}

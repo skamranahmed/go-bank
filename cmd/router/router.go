@@ -12,7 +12,9 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 	router := gin.Default()
 	router.Use(gin.Recovery())
 
-	healthzController.Register(router, services.HealthzService)
+	healthzController.Register(router, healthzController.Dependency{
+		HealthzService: services.HealthzService,
+	})
 
 	authenticationController.Register(router, authenticationController.Dependency{
 		Db:                    db,

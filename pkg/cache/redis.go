@@ -45,3 +45,7 @@ func (r *redisClient) Delete(ctx context.Context, key string) error {
 func (r *redisClient) Close() error {
 	return r.client.Close()
 }
+
+func (r *redisClient) Ping() error {
+	return r.client.Ping(context.Background()).Err()
+}
