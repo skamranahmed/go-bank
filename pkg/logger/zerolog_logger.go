@@ -44,8 +44,13 @@ func newZerologLogger() Logger {
 		output = os.Stderr
 	}
 
+	logLevel := zerolog.InfoLevel
+	if config.GetLoggerConfig().Level == config.LogLevelDebug {
+		logLevel = zerolog.DebugLevel
+	}
+
 	zlogger := zerolog.New(output).
-		Level(zerolog.InfoLevel).
+		Level(logLevel).
 		With().
 		Timestamp().
 		CallerWithSkipFrameCount(4).

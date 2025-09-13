@@ -55,9 +55,9 @@ func NewPostgresClient() (*bun.DB, error) {
 		return nil, err
 	}
 
-	if config.GetEnvironment() == config.APP_ENVIRONMENT_LOCAL {
+	if config.GetLoggerConfig().Level == config.LogLevelDebug {
 		db.AddQueryHook(bundebug.NewQueryHook(
-			bundebug.WithVerbose(true), // print full SQL with args, enable only in local environment
+			bundebug.WithVerbose(true), // print full SQL with args
 		))
 	}
 

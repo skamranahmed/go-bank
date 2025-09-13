@@ -1,11 +1,23 @@
 package config
 
+type LogLevel string
+
+const (
+	LogLevelInfo  LogLevel = "info"
+	LogLevelDebug LogLevel = "debug"
+)
+
 type Config struct {
 	Environment string         `koanf:"environment"`
+	Logger      LoggerConfig   `koanf:"logger"`
 	Server      ServerConfig   `koanf:"server"`
 	Database    DatabaseConfig `koanf:"database"`
 	Cache       CacheConfig    `koanf:"cache"`
 	Auth        AuthConfig     `koanf:"auth"`
+}
+
+type LoggerConfig struct {
+	Level LogLevel `koanf:"level"`
 }
 
 type ServerConfig struct {

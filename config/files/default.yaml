@@ -1,3 +1,6 @@
+logger:
+  level: info # info, debug
+
 server:
   port: 8080
   gracefulShutdownTimeoutInSeconds: 20 

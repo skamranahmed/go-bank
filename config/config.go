@@ -47,9 +47,50 @@ func loadConfig() *Config {
 }
 
 func loadConfigFile(configFileName string) {
-	dir, _ := os.Getwd()
-	configFilPath := filepath.Join(dir, filepath.Join("config", "files", configFileName))
-	k.Load(file.Provider(configFilPath), yaml.Parser())
+	rootDir := findRootDir()
+	configFilPath := filepath.Join(rootDir, filepath.Join("config", "files", configFileName))
+	err := k.Load(file.Provider(configFilPath), yaml.Parser())
+	if err != nil {
+		log.Fatalf("Error reading config files, error: %+v", err)
+	}
+}
+
+func findRootDir() string {
+	// start from the current working directory
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Error getting working directory error: %+v", err)
+		return ""
+	}
+
+	for {
+		// check if the `go.mod`` file exists in the current directory
+		_, err := os.Stat(filepath.Join(dir, "go.mod"))
+		if err == nil {
+			return dir
+		}
+
+		// move one directory up
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			// reached the root of the filesystem
+			break
+		}
+		dir = parentDir
+	}
+
+	return ""
+}
+
+func GetLoggerConfig() LoggerConfig {
+	loggerConfig := loadConfig().Logger
+
+	logLevel := getLoggerLevel()
+	if logLevel != "" {
+		loggerConfig.Level = LogLevel(logLevel)
+	}
+
+	return loggerConfig
 }
 
 func GetEnvironment() string {

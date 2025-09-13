@@ -6,6 +6,9 @@ import (
 )
 
 const (
+	// logger
+	loggerLevel = "LOGGER_LEVEL"
+
 	environment = "ENVIRONMENT"
 
 	// server
@@ -36,6 +39,10 @@ const (
 	authAccessTokenExpiryDurationInSeconds = "AUTH_ACCESS_TOKEN_EXPIRY_DURATION_IN_SECONDS"
 	authAccessTokenSecretSigningKey        = "AUTH_ACCESS_TOKEN_SECRET_SIGNING_KEY"
 )
+
+func getLoggerLevel() string {
+	return os.Getenv(loggerLevel)
+}
 
 func getEnvironment() string {
 	env := os.Getenv(environment)
