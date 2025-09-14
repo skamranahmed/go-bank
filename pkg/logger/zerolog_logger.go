@@ -36,7 +36,8 @@ func newZerologLogger() Logger {
 			return filepath.Base(fmt.Sprintf("%s", i))
 		},
 		PartsExclude: []string{
-			zerolog.TimestampFieldName,
+			// We can exclude fields from the logs if we want
+			// zerolog.TimestampFieldName,
 		},
 	}
 
@@ -61,18 +62,22 @@ func newZerologLogger() Logger {
 	}
 }
 
-func (z *zerologLogger) Infof(message string, args ...any) {
+func (z *zerologLogger) Info(message string, args ...any) {
 	z.logger.Info().Msgf(message, args...)
 }
 
-func (z *zerologLogger) Warnf(message string, args ...any) {
+func (z *zerologLogger) InfoFields(message string, fields map[string]any) {
+	z.logger.Info().Fields(fields).Msg(message)
+}
+
+func (z *zerologLogger) Warn(message string, args ...any) {
 	z.logger.Warn().Msgf(message, args...)
 }
 
-func (z *zerologLogger) Errorf(message string, args ...any) {
+func (z *zerologLogger) Error(message string, args ...any) {
 	z.logger.Error().Msgf(message, args...)
 }
 
-func (z *zerologLogger) Fatalf(message string, args ...any) {
+func (z *zerologLogger) Fatal(message string, args ...any) {
 	z.logger.Fatal().Msgf(message, args...)
 }

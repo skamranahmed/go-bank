@@ -90,12 +90,12 @@ func NewPostgresTestContainer() *PostgresTestContainer {
 				Started:          true,
 			})
 		if err != nil {
-			logger.Fatalf("Unable to start db container, error: %+v", err)
+			logger.Fatal("Unable to start db container, error: %+v", err)
 		}
 
 		port, err := dbContainer.MappedPort(context.Background(), "5432")
 		if err != nil {
-			logger.Fatalf("Unable to get port for db container, error: %+v", err)
+			logger.Fatal("Unable to get port for db container, error: %+v", err)
 		}
 
 		postgresTestContainer = PostgresTestContainer{
@@ -103,7 +103,7 @@ func NewPostgresTestContainer() *PostgresTestContainer {
 			TeardownFunc: func() {
 				err := dbContainer.Terminate(context.Background())
 				if err != nil {
-					logger.Fatalf(err.Error())
+					logger.Fatal(err.Error())
 				}
 			},
 		}
@@ -145,7 +145,7 @@ func setupPostgresDb(postgresTestContainer *PostgresTestContainer) *bun.DB {
 				);
 		`).Scan(&doesDbTemplateExist)
 	if err != nil {
-		logger.Fatalf("Unable to check for template database existence, error: %+v", err)
+		logger.Fatal("Unable to check for template database existence, error: %+v", err)
 	}
 
 	// if it does not exist, bootstrap the db and then create a template out of it
@@ -154,19 +154,19 @@ func setupPostgresDb(postgresTestContainer *PostgresTestContainer) *bun.DB {
 		for _, model := range allModels() {
 			_, err := operationsDb.NewDropTable().IfExists().Cascade().Model(model).Exec(ctx)
 			if err != nil {
-				logger.Fatalf(err.Error())
+				logger.Fatal(err.Error())
 			}
 
 			_, err = operationsDb.NewCreateTable().Model(model).WithForeignKeys().Exec(ctx)
 			if err != nil {
-				logger.Fatalf(err.Error())
+				logger.Fatal(err.Error())
 			}
 
 		}
 
 		_, err := operationsDb.NewRaw(`CREATE DATABASE "go_bank_test_template" TEMPLATE "postgres"`).Exec(ctx)
 		if err != nil {
-			logger.Fatalf("Unable to create database `go_bank_test_template`, error: %+v", err)
+			logger.Fatal("Unable to create database `go_bank_test_template`, error: %+v", err)
 		}
 	}
 
@@ -174,12 +174,12 @@ func setupPostgresDb(postgresTestContainer *PostgresTestContainer) *bun.DB {
 	// switch to a different db connection before doing
 	_, err = operationsDb.NewRaw(`DROP DATABASE "go_bank_test"`).Exec(ctx)
 	if err != nil {
-		logger.Fatalf("Unable to drop database `go_bank_test`, error: %+v", err)
+		logger.Fatal("Unable to drop database `go_bank_test`, error: %+v", err)
 	}
 
 	_, err = operationsDb.NewRaw(`CREATE DATABASE "go_bank_test" TEMPLATE "go_bank_test_template"`).Exec(ctx)
 	if err != nil {
-		logger.Fatalf("Unable to create database `go_bank_test`, error: %+v", err)
+		logger.Fatal("Unable to create database `go_bank_test`, error: %+v", err)
 	}
 
 	testPostgresDbDsn := fmt.Sprintf(
@@ -216,12 +216,12 @@ func NewRedisTestContainer() *RedisTestContainer {
 				Started:          true,
 			})
 		if err != nil {
-			logger.Fatalf("Unable to start redis container, error: %+v", err)
+			logger.Fatal("Unable to start redis container, error: %+v", err)
 		}
 
 		port, err := redisContainer.MappedPort(context.Background(), "6379")
 		if err != nil {
-			logger.Fatalf("Unable to get port for redis container, error: %+v", err)
+			logger.Fatal("Unable to get port for redis container, error: %+v", err)
 		}
 
 		redisTestContainer = RedisTestContainer{
@@ -229,7 +229,7 @@ func NewRedisTestContainer() *RedisTestContainer {
 			TeardownFunc: func() {
 				err := redisContainer.Terminate(context.Background())
 				if err != nil {
-					logger.Fatalf(err.Error())
+					logger.Fatal(err.Error())
 				}
 			},
 		}
@@ -247,7 +247,7 @@ func setupRedis(redisTestContainer *RedisTestContainer) cache.CacheClient {
 
 	cacheClient, err := cache.NewRedisClient(redisClientOpts)
 	if err != nil {
-		logger.Fatalf("Redis test container error: %+v", err.Error())
+		logger.Fatal("Redis test container error: %+v", err.Error())
 	}
 
 	return cacheClient
@@ -261,26 +261,26 @@ func ensureFreshRedis(redisTestContainer *RedisTestContainer) {
 	client := redis.NewClient(redisClientOpts)
 	err := client.Ping(context.Background()).Err()
 	if err != nil {
-		logger.Fatalf("Unable to connect to redis, error: %+v", err)
+		logger.Fatal("Unable to connect to redis, error: %+v", err)
 	}
 
 	_, err = client.FlushAll(context.TODO()).Result()
 	if err != nil {
-		logger.Fatalf("Unable to flush redis keys, error: %+v", err)
+		logger.Fatal("Unable to flush redis keys, error: %+v", err)
 	}
 	client.Conn().Close()
 }
 
 func InitRedisForTests() (cache.CacheClient, func()) {
-	logger.Infof("⏳ Starting Redis test container")
+	logger.Info("⏳ Starting Redis test container")
 
 	redisClientOpts, redisTeardownFunc := startRedisTestContainer()
 	cacheClient, err := cache.NewRedisClient(redisClientOpts)
 	if err != nil {
-		logger.Fatalf("Redis test container error: %+v", err.Error())
+		logger.Fatal("Redis test container error: %+v", err.Error())
 	}
 
-	logger.Infof("✅ Redis test container is healthy")
+	logger.Info("✅ Redis test container is healthy")
 
 	return cacheClient, redisTeardownFunc
 }
@@ -299,12 +299,12 @@ func startRedisTestContainer() (*redis.Options, func()) {
 			Started:          true,
 		})
 	if err != nil {
-		logger.Fatalf("Unable to start redis container, error: %+v", err)
+		logger.Fatal("Unable to start redis container, error: %+v", err)
 	}
 
 	port, err := redisContainer.MappedPort(context.Background(), "6379")
 	if err != nil {
-		logger.Fatalf("Unable to get port for redis container, error: %+v", err)
+		logger.Fatal("Unable to get port for redis container, error: %+v", err)
 	}
 
 	redisClientOpts := &redis.Options{
@@ -314,7 +314,7 @@ func startRedisTestContainer() (*redis.Options, func()) {
 	return redisClientOpts, func() {
 		err := redisContainer.Terminate(context.Background())
 		if err != nil {
-			logger.Fatalf(err.Error())
+			logger.Fatal(err.Error())
 		}
 	}
 }

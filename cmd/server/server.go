@@ -36,10 +36,10 @@ func Start(router *gin.Engine) {
 
 	err := server.stop(ctx)
 	if err != nil {
-		logger.Fatalf("Error while server shutdown, doing it forcefully now")
+		logger.Fatal("Error while server shutdown, doing it forcefully now")
 	}
 
-	logger.Infof("Server is stopping")
+	logger.Info("Server is stopping")
 }
 
 type apiServer struct {
@@ -56,10 +56,11 @@ func newServer(address string, handler http.Handler) *apiServer {
 }
 
 func (s *apiServer) start() {
+	logger.Info("Server listening on port %v", config.GetServerConfig().Port)
 	err := s.Server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		logger.Infof("Error while starting server: %v", err)
-		logger.Fatalf("Server is stopping")
+		logger.Info("Error while starting server: %v", err)
+		logger.Fatal("Server is stopping")
 	}
 }
 
@@ -68,7 +69,7 @@ func (s *apiServer) waitForSignal() {
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	signalValue := <-done
-	logger.Infof("Received '%+v' syscall, gracefully shutting down server", signalValue.String())
+	logger.Info("Received '%+v' syscall, gracefully shutting down server", signalValue.String())
 }
 
 func (s *apiServer) stop(ctx context.Context) error {

@@ -10,7 +10,7 @@ import (
 func main() {
 	err := cmd.Run()
 	if err != nil {
-		logger.Errorf("Error during server startup: %+v", err)
+		logger.Error("Error during server startup: %+v", err)
 		os.Exit(1)
 	}
 }

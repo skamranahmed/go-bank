@@ -51,7 +51,7 @@ func NewPostgresClient() (*bun.DB, error) {
 	// check readiness
 	err := db.Ping()
 	if err != nil {
-		logger.Errorf("unable to connect to postgres db, error: %+v", err)
+		logger.Error("Unable to connect to postgres db, error: %+v", err)
 		return nil, err
 	}
 

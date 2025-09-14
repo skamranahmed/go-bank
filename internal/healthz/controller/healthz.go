@@ -22,7 +22,7 @@ func (c *healthzController) CheckHealth(ginCtx *gin.Context) {
 	// check db readiness
 	err := c.service.DbPing()
 	if err != nil {
-		logger.Errorf("unable to connect to postgres db, error: %+v", err)
+		logger.Error("unable to connect to postgres db, error: %+v", err)
 		ginCtx.JSON(http.StatusInternalServerError, gin.H{
 			"status": "DB_NOT_OK",
 		})
@@ -32,7 +32,7 @@ func (c *healthzController) CheckHealth(ginCtx *gin.Context) {
 	// check cache readiness
 	err = c.service.CachePing()
 	if err != nil {
-		logger.Errorf("unable to connect to redis, error: %+v", err)
+		logger.Error("unable to connect to redis, error: %+v", err)
 		ginCtx.JSON(http.StatusInternalServerError, gin.H{
 			"status": "CACHE_NOT_OK",
 		})

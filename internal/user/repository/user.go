@@ -31,7 +31,7 @@ func (r *userRepository) CreateUser(requestCtx context.Context, dbExecutor bun.I
 		Returning("*").
 		Scan(requestCtx)
 	if err != nil {
-		logger.Warnf("error while creating new user record, error: %+v", err)
+		logger.Warn("Error while creating new user record, error: %+v", err)
 		if strings.Contains(err.Error(), "unique constraint") {
 			return nil, &server.ApiError{
 				HttpStatusCode: http.StatusConflict,

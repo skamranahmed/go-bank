@@ -8,10 +8,11 @@ var (
 )
 
 type Logger interface {
-	Infof(message string, args ...any)
-	Warnf(message string, args ...any)
-	Errorf(message string, args ...any)
-	Fatalf(format string, args ...any)
+	Info(message string, args ...any)
+	InfoFields(message string, fields map[string]any)
+	Warn(message string, args ...any)
+	Error(message string, args ...any)
+	Fatal(format string, args ...any)
 }
 
 func Init() {
@@ -20,18 +21,22 @@ func Init() {
 	})
 }
 
-func Infof(message string, args ...any) {
-	loggerInstance.Infof(message, args...)
+func Info(message string, args ...any) {
+	loggerInstance.Info(message, args...)
 }
 
-func Warnf(message string, args ...any) {
-	loggerInstance.Warnf(message, args...)
+func InfoFields(message string, fields map[string]any) {
+	loggerInstance.InfoFields(message, fields)
 }
 
-func Errorf(message string, args ...any) {
-	loggerInstance.Errorf(message, args...)
+func Warn(message string, args ...any) {
+	loggerInstance.Warn(message, args...)
 }
 
-func Fatalf(message string, args ...any) {
-	loggerInstance.Fatalf(message, args...)
+func Error(message string, args ...any) {
+	loggerInstance.Error(message, args...)
+}
+
+func Fatal(message string, args ...any) {
+	loggerInstance.Fatal(message, args...)
 }

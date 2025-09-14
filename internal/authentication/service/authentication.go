@@ -56,7 +56,7 @@ func (s *authenticationService) CreateAccessToken(requestCtx context.Context, us
 	accessTokenCacheValue := ""
 	err = s.cacheClient.SetWithTTL(requestCtx, accessTokenCacheKey, accessTokenCacheValue, accessTokenExpiryTTL)
 	if err != nil {
-		logger.Errorf("failed to cache access token, error: %+v", err)
+		logger.Error("Failed to cache access token, error: %+v", err)
 		return "", &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "Unable to generate access token. Please try again later.",
@@ -77,7 +77,7 @@ func (s *authenticationService) createToken(payload any, secretSigningKey string
 		claims["issued_at"] = p.IssuedAt
 		claims["expires_at"] = p.ExpiresAt
 	default:
-		logger.Errorf("unsupported payload type passed for token creation: %+v", payload)
+		logger.Error("Unsupported payload type passed for token creation: %+v", payload)
 		return "", &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "Unable to generate access token. Please try again later.",
