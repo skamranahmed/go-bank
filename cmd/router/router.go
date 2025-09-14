@@ -2,6 +2,8 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/skamranahmed/go-bank/cmd/middleware"
+	"github.com/skamranahmed/go-bank/config"
 	"github.com/skamranahmed/go-bank/internal"
 	authenticationController "github.com/skamranahmed/go-bank/internal/authentication/controller"
 	healthzController "github.com/skamranahmed/go-bank/internal/healthz/controller"
@@ -9,8 +11,15 @@ import (
 )
 
 func Init(db *bun.DB, services *internal.Services) *gin.Engine {
-	router := gin.Default()
+	if config.GetEnvironment() == config.APP_ENVIRONMENT_LOCAL {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	router := gin.New()
 	router.Use(gin.Recovery())
+	router.Use(middleware.RequestLoggerMiddleware())
 
 	healthzController.Register(router, healthzController.Dependency{
 		HealthzService: services.HealthzService,
