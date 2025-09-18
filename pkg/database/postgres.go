@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
@@ -51,7 +52,7 @@ func NewPostgresClient() (*bun.DB, error) {
 	// check readiness
 	err := db.Ping()
 	if err != nil {
-		logger.Error("Unable to connect to postgres db, error: %+v", err)
+		logger.Error(context.TODO(), "Unable to connect to postgres db, error: %+v", err)
 		return nil, err
 	}
 

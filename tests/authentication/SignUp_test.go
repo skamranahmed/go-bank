@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -67,7 +68,9 @@ func assertFieldError(t *testing.T, resp ErrorResponse, field string, expectedEr
 }
 
 func Test_SignUp_Route(t *testing.T) {
-	app := testutils.NewApp(postgresTestContainer, redisTestContainer)
+	ctx := context.TODO()
+
+	app := testutils.NewApp(ctx, postgresTestContainer, redisTestContainer)
 	defer app.TeardownFunc()
 
 	fixtures, err := testfixtures.New(

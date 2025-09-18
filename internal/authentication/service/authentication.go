@@ -40,7 +40,7 @@ func (s *authenticationService) CreateAccessToken(requestCtx context.Context, us
 		IssuedAt:  issuedAt,
 		ExpiresAt: accessTokenExpiresAt,
 	}
-	accessToken, err := s.createToken(accessTokenPayload, authConfig.AccessTokenSecretSigningKey)
+	accessToken, err := s.createToken(requestCtx, accessTokenPayload, authConfig.AccessTokenSecretSigningKey)
 	if err != nil {
 		return "", err
 	}
@@ -56,7 +56,7 @@ func (s *authenticationService) CreateAccessToken(requestCtx context.Context, us
 	accessTokenCacheValue := ""
 	err = s.cacheClient.SetWithTTL(requestCtx, accessTokenCacheKey, accessTokenCacheValue, accessTokenExpiryTTL)
 	if err != nil {
-		logger.Error("Failed to cache access token, error: %+v", err)
+		logger.Error(requestCtx, "Failed to cache access token, error: %+v", err)
 		return "", &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "Unable to generate access token. Please try again later.",
@@ -66,7 +66,7 @@ func (s *authenticationService) CreateAccessToken(requestCtx context.Context, us
 	return accessToken, nil
 }
 
-func (s *authenticationService) createToken(payload any, secretSigningKey string) (string, error) {
+func (s *authenticationService) createToken(requestCtx context.Context, payload any, secretSigningKey string) (string, error) {
 	claims := jwt.MapClaims{}
 
 	// keeping it extendible, in case I plan to introduce a refresh token as well
@@ -77,7 +77,7 @@ func (s *authenticationService) createToken(payload any, secretSigningKey string
 		claims["issued_at"] = p.IssuedAt
 		claims["expires_at"] = p.ExpiresAt
 	default:
-		logger.Error("Unsupported payload type passed for token creation: %+v", payload)
+		logger.Error(requestCtx, "Unsupported payload type passed for token creation: %+v", payload)
 		return "", &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "Unable to generate access token. Please try again later.",

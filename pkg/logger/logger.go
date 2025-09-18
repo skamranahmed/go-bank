@@ -1,6 +1,9 @@
 package logger
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 var (
 	once           sync.Once
@@ -8,11 +11,11 @@ var (
 )
 
 type Logger interface {
-	Info(message string, args ...any)
+	Info(ctx context.Context, message string, args ...any)
 	InfoFields(message string, fields map[string]any)
-	Warn(message string, args ...any)
-	Error(message string, args ...any)
-	Fatal(format string, args ...any)
+	Warn(ctx context.Context, message string, args ...any)
+	Error(ctx context.Context, message string, args ...any)
+	Fatal(ctx context.Context, message string, args ...any)
 }
 
 func Init() {
@@ -21,22 +24,22 @@ func Init() {
 	})
 }
 
-func Info(message string, args ...any) {
-	loggerInstance.Info(message, args...)
+func Info(ctx context.Context, message string, args ...any) {
+	loggerInstance.Info(ctx, message, args...)
 }
 
 func InfoFields(message string, fields map[string]any) {
 	loggerInstance.InfoFields(message, fields)
 }
 
-func Warn(message string, args ...any) {
-	loggerInstance.Warn(message, args...)
+func Warn(ctx context.Context, message string, args ...any) {
+	loggerInstance.Warn(ctx, message, args...)
 }
 
-func Error(message string, args ...any) {
-	loggerInstance.Error(message, args...)
+func Error(ctx context.Context, message string, args ...any) {
+	loggerInstance.Error(ctx, message, args...)
 }
 
-func Fatal(message string, args ...any) {
-	loggerInstance.Fatal(message, args...)
+func Fatal(ctx context.Context, message string, args ...any) {
+	loggerInstance.Fatal(ctx, message, args...)
 }

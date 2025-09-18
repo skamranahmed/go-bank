@@ -1,18 +1,27 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"runtime/debug"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/xid"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 )
 
 func RequestLoggerMiddleware() gin.HandlerFunc {
 	return func(ginCtx *gin.Context) {
 		start := time.Now()
+
+		correlationID := xid.New().String()
+
+		// attach correlationID to request context
+		ctx := context.WithValue(ginCtx.Request.Context(), "correlation_id", correlationID)
+		ginCtx.Request = ginCtx.Request.WithContext(ctx)
+		requestCtx := ginCtx.Request.Context()
 
 		defer func() {
 			logMessage := "Request processed"
@@ -26,7 +35,7 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 				logMessage = "Request processed with panic recovery"
 				errMsg := fmt.Sprintf("%v", r)
 				stack := string(debug.Stack())
-				logger.Info("Panic recovered, errMsg: %+v, stackTrace: %+v", errMsg, stack)
+				logger.Error(requestCtx, "Panic recovered, errMsg: %+v, stackTrace: %+v", errMsg, stack)
 				ginCtx.Writer.WriteHeader(http.StatusInternalServerError)
 			}
 
@@ -42,6 +51,7 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 				"response_length":         ginCtx.Writer.Size(),
 				"response_time_formatted": humanReadableResponseTime,
 				"response_time_ms":        responseTimeInPlainMs,
+				"correlation_id":          correlationID,
 			})
 		}()
 

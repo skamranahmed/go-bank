@@ -17,7 +17,7 @@ func NewRedisClient(opt *redis.Options) (CacheClient, error) {
 
 	err := client.Ping(context.Background()).Err()
 	if err != nil {
-		logger.Error("Unable to connect to redis, error: %+v", err)
+		logger.Error(context.TODO(), "Unable to connect to redis, error: %+v", err)
 		return nil, err
 	}
 

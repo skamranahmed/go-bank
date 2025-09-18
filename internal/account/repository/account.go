@@ -29,7 +29,7 @@ func (r *accountRepository) CreateAccount(requestCtx context.Context, dbExecutor
 		Model(account).
 		Scan(requestCtx)
 	if err != nil {
-		logger.Error("Error while creating new account for userID: %+v, error: %+v", account.UserID, err)
+		logger.Error(requestCtx, "Error while creating new account for userID: %+v, error: %+v", account.UserID, err)
 		return &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "We couldn't create your account at the moment. Please try again later.",

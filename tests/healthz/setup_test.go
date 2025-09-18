@@ -1,6 +1,7 @@
 package healthz
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -17,8 +18,10 @@ func TestMain(m *testing.M) {
 	// init logger
 	logger.Init()
 
-	postgresTestContainer = testutils.NewPostgresTestContainer()
-	redisTestContainer = testutils.NewRedisTestContainer()
+	ctx := context.TODO()
+
+	postgresTestContainer = testutils.NewPostgresTestContainer(ctx)
+	redisTestContainer = testutils.NewRedisTestContainer(ctx)
 
 	// run tests
 	code := m.Run()

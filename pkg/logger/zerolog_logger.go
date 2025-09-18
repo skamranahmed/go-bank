@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -62,22 +63,30 @@ func newZerologLogger() Logger {
 	}
 }
 
-func (z *zerologLogger) Info(message string, args ...any) {
-	z.logger.Info().Msgf(message, args...)
+func (z *zerologLogger) Info(ctx context.Context, message string, args ...any) {
+	correlationID := z.extractCorrelationIDFromCtx(ctx)
+	z.logger.Info().Any("correlation_id", correlationID).Msgf(message, args...)
 }
 
 func (z *zerologLogger) InfoFields(message string, fields map[string]any) {
 	z.logger.Info().Fields(fields).Msg(message)
 }
 
-func (z *zerologLogger) Warn(message string, args ...any) {
-	z.logger.Warn().Msgf(message, args...)
+func (z *zerologLogger) Warn(ctx context.Context, message string, args ...any) {
+	correlationID := z.extractCorrelationIDFromCtx(ctx)
+	z.logger.Warn().Any("correlation_id", correlationID).Msgf(message, args...)
 }
 
-func (z *zerologLogger) Error(message string, args ...any) {
-	z.logger.Error().Msgf(message, args...)
+func (z *zerologLogger) Error(ctx context.Context, message string, args ...any) {
+	correlationID := z.extractCorrelationIDFromCtx(ctx)
+	z.logger.Error().Any("correlation_id", correlationID).Msgf(message, args...)
 }
 
-func (z *zerologLogger) Fatal(message string, args ...any) {
-	z.logger.Fatal().Msgf(message, args...)
+func (z *zerologLogger) Fatal(ctx context.Context, message string, args ...any) {
+	correlationID := z.extractCorrelationIDFromCtx(ctx)
+	z.logger.Fatal().Any("correlation_id", correlationID).Msgf(message, args...)
+}
+
+func (z *zerologLogger) extractCorrelationIDFromCtx(ctx context.Context) any {
+	return ctx.Value("correlation_id")
 }

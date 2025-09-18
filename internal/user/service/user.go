@@ -32,7 +32,7 @@ func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB,
 
 	hashedPassword, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 	if err != nil {
-		logger.Error("Error hashing the password, error: %v", err)
+		logger.Error(requestCtx, "Error hashing the password, error: %v", err)
 		return nil, &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "Unable to process your request. Please try again later.",
