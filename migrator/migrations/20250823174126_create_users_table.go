@@ -13,6 +13,8 @@ func init() {
 
 func upCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
 	// This code is executed when the migration is applied.
+	logMigrationStatus("⬆️ Applying migration")
+
 	_, err := tx.Exec(`
 		CREATE TABLE users (
 			id UUID PRIMARY KEY NOT NULL DEFAULT GEN_RANDOM_UUID(),
@@ -23,11 +25,25 @@ func upCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
 			email VARCHAR(100) NOT NULL UNIQUE CHECK (email != '')
 		)
 	`)
-	return err
+	if err != nil {
+		logMigrationStatus("❌ Applying migration failed")
+		return err
+	}
+
+	logMigrationStatus("✅ Migration applied")
+	return nil
 }
 
 func downCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
 	// This code is executed when the migration is rolled back.
+	logMigrationStatus("⬇️ Rolling back migration")
+
 	_, err := tx.Exec(`DROP TABLE users`)
-	return err
+	if err != nil {
+		logMigrationStatus("❌ Rollback failed")
+		return err
+	}
+
+	logMigrationStatus("✅ Rollback done")
+	return nil
 }

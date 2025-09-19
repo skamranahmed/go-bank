@@ -22,11 +22,15 @@ func init() {
 func upNoopMigration(ctx context.Context, tx *sql.Tx) error {
 	// This code runs when applying the migration (goose up).
 	// Intentionally does nothing.
+	logMigrationStatus("⬆️ Applying migration")
+	logMigrationStatus("✅ Migration applied")
 	return nil
 }
 
 func downNoopMigration(ctx context.Context, tx *sql.Tx) error {
 	// This code runs when rolling back the migration (goose down).
 	// Intentionally does nothing.
+	logMigrationStatus("⬇️ Rolling back migration")
+	logMigrationStatus("✅ Rollback done")
 	return nil
 }

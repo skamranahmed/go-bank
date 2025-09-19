@@ -66,7 +66,7 @@ func main() {
 		if err != nil {
 			if errors.Is(err, goose.ErrNoCurrentVersion) {
 				// capturing the 'ErrNoCurrentVersion' error else it will lead to a non-zero exit code
-				fmt.Println("No applied migrations available to roll back. Skipping 'down' migrations")
+				fmt.Println("No applied migrations available to rollback. Skipping 'down' migrations")
 			} else {
 				log.Fatalf("Failed to run Goose command: %+v", err)
 			}
