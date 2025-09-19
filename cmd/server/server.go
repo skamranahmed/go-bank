@@ -17,7 +17,7 @@ import (
 func Start(router *gin.Engine) {
 	serverConfig := config.GetServerConfig()
 	server := newServer(
-		fmt.Sprintf("localhost:%d", serverConfig.Port),
+		fmt.Sprintf(":%d", serverConfig.Port),
 		router,
 	)
 
