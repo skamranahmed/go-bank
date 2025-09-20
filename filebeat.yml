@@ -1,0 +1,11 @@
+filebeat.inputs:
+- type: filestream
+  id: go-bank-api-logs
+  paths:
+    - /logs/*.log
+    - /usr/share/filebeat/native-logs/*.log
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: debug

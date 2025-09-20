@@ -5,6 +5,7 @@ GOOSE_MIGRATOR_DIR = migrator
 
 .PHONY: run
 run:
+	rm -rf ./native-logs/api.log
 	go mod tidy
 	go run main.go
 
