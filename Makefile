@@ -5,7 +5,24 @@ GOOSE_MIGRATOR_DIR = migrator
 
 .PHONY: run
 run:
+	go mod tidy
 	go run main.go
+
+.PHONY: up
+up:
+	docker compose up -d
+
+.PHONY: up-build
+up-build:
+	docker compose up --build -d 
+
+.PHONY: stop
+stop:
+	docker compose stop
+
+.PHONY: down
+down:
+	docker compose down
 
 .PHONY: build-migrator
 build-migrator:
