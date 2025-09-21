@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
 	"github.com/skamranahmed/go-bank/pkg/logger"
+	"github.com/skamranahmed/go-bank/pkg/metrics"
 )
 
 func RequestLoggerMiddleware() gin.HandlerFunc {
@@ -39,20 +40,29 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 				ginCtx.Writer.WriteHeader(http.StatusInternalServerError)
 			}
 
+			requestMethod := ginCtx.Request.Method
+			requestEndpoint := ginCtx.FullPath()
+			responseStatus := ginCtx.Writer.Status()
+
 			// collect and log useful fields
 			logger.InfoFields(logMessage, map[string]any{
-				"request_method":          ginCtx.Request.Method,
+				"request_method":          requestMethod,
+				"request_endpoint":        requestEndpoint,
 				"request_path":            ginCtx.Request.URL.Path,
 				"request_query_params":    ginCtx.Request.URL.RawQuery,
 				"request_referer":         ginCtx.Request.Referer(),
 				"client_ip":               ginCtx.ClientIP(),
 				"user_agent":              ginCtx.Request.UserAgent(),
-				"response_status":         ginCtx.Writer.Status(),
+				"response_status":         responseStatus,
 				"response_length":         ginCtx.Writer.Size(),
 				"response_time_formatted": humanReadableResponseTime,
 				"response_time_ms":        responseTimeInPlainMs,
 				"correlation_id":          correlationID,
 			})
+
+			// collect metrics for prometheus
+			metrics.HttpRequestsTotal.WithLabelValues(requestMethod, requestEndpoint, fmt.Sprintf("%d", responseStatus)).Inc()
+			metrics.HttpRequestDuration.WithLabelValues(requestMethod, requestEndpoint, fmt.Sprintf("%d", responseStatus)).Observe(requestProcessingDuration.Seconds())
 		}()
 
 		// process the request

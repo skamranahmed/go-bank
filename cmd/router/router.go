@@ -2,15 +2,20 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/skamranahmed/go-bank/cmd/middleware"
 	"github.com/skamranahmed/go-bank/config"
 	"github.com/skamranahmed/go-bank/internal"
 	authenticationController "github.com/skamranahmed/go-bank/internal/authentication/controller"
 	healthzController "github.com/skamranahmed/go-bank/internal/healthz/controller"
+	"github.com/skamranahmed/go-bank/pkg/metrics"
 	"github.com/uptrace/bun"
 )
 
 func Init(db *bun.DB, services *internal.Services) *gin.Engine {
+	// register prometheus metrics
+	metrics.Register()
+
 	if config.GetEnvironment() == config.APP_ENVIRONMENT_LOCAL {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -20,6 +25,8 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.RequestLoggerMiddleware())
+
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	healthzController.Register(router, healthzController.Dependency{
 		HealthzService: services.HealthzService,

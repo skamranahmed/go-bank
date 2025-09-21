@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "api"
+    static_configs:
+        # "api:8080" will work only if prometheus and the api server run in docker containers on the same network.
+        # If the api server runs natively on the host and prometheus is running in a docker container, then:
+        # for macOS/windows use "host.docker.internal:8080" instead of "api:8080" 
+        # for linux use "<docker0_IP>:8080", <docker0_IP> can be found by running "ip addr show docker0"
+      - targets: ["api:8080"]
