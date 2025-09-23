@@ -1,7 +1,13 @@
 package metrics
 
 import (
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	once sync.Once
 )
 
 var (
@@ -24,6 +30,8 @@ var (
 )
 
 func Register() {
-	prometheus.MustRegister(HttpRequestsTotal)
-	prometheus.MustRegister(HttpRequestDuration)
+	once.Do(func() {
+		prometheus.MustRegister(HttpRequestsTotal)
+		prometheus.MustRegister(HttpRequestDuration)
+	})
 }
