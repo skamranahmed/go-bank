@@ -45,6 +45,7 @@ var (
 type TestApp struct {
 	Db           *bun.DB
 	Cache        cache.CacheClient
+	Services     *internal.Services
 	Router       *gin.Engine
 	TeardownFunc func()
 }
@@ -63,9 +64,10 @@ func NewApp(ctx context.Context, postresTestContainer *PostgresTestContainer, re
 	testRouter := router.Init(testDb, services)
 
 	return TestApp{
-		Db:     testDb,
-		Cache:  testCache,
-		Router: testRouter,
+		Db:       testDb,
+		Cache:    testCache,
+		Services: services,
+		Router:   testRouter,
 		TeardownFunc: func() {
 			testDb.Close()
 			testCache.Close()

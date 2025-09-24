@@ -30,10 +30,6 @@ func (r *redisClient) Get(ctx context.Context, key string) (any, error) {
 	return r.client.Get(ctx, key).Result()
 }
 
-func (r *redisClient) Scan(ctx context.Context, cursor uint64, pattern string, count int64) ([]string, uint64, error) {
-	return r.client.Scan(ctx, cursor, pattern, count).Result()
-}
-
 func (r *redisClient) Set(ctx context.Context, key string, value any) error {
 	return r.client.Set(ctx, key, value, 0).Err()
 }

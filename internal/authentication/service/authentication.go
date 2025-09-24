@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -64,6 +65,72 @@ func (s *authenticationService) CreateAccessToken(requestCtx context.Context, us
 	}
 
 	return accessToken, nil
+}
+
+func (s *authenticationService) VerifyAccessToken(requestCtx context.Context, tokenString string) (*AccessTokenPayload, error) {
+	keyFunc := func(token *jwt.Token) (any, error) {
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %+v", token.Header["alg"])
+		}
+
+		if token.Header["alg"] != jwt.SigningMethodHS256.Alg() {
+			return nil, fmt.Errorf("Unexpected signing algorithm: %+v", token.Header["alg"])
+		}
+
+		secret := config.GetAuthConfig().AccessTokenSecretSigningKey
+		return []byte(secret), nil
+	}
+
+	token, err := jwt.Parse(tokenString, keyFunc)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse token: %+v", err)
+	}
+
+	if !token.Valid {
+		return nil, errors.New("Invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("Invalid token claims")
+	}
+
+	issuedAt, ok := claims["issued_at"].(float64)
+	if !ok {
+		return nil, errors.New("Invalid issued at time")
+	}
+
+	expiresAt, ok := claims["expires_at"].(float64)
+	if !ok {
+		return nil, errors.New("Invalid expiration time")
+	}
+	if time.Now().Unix() > int64(expiresAt) {
+		return nil, errors.New("Token has expired")
+	}
+
+	tokenID, ok := claims["token_id"].(string)
+	if !ok {
+		return nil, errors.New("Invalid token ID")
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		return nil, errors.New("Invalid user ID")
+	}
+
+	accessTokenCacheKey := fmt.Sprintf("auth:access_token_id:%v:user_id:%v", tokenID, userID)
+	_, err = s.cacheClient.Get(requestCtx, accessTokenCacheKey)
+	if err != nil {
+		return nil, fmt.Errorf("Token not found in cache that means it was either revoked or has been expired: %+v", err)
+	}
+
+	return &AccessTokenPayload{
+		TokenID:   tokenID,
+		UserID:    userID,
+		IssuedAt:  int64(issuedAt),
+		ExpiresAt: int64(expiresAt),
+	}, nil
 }
 
 func (s *authenticationService) createToken(requestCtx context.Context, payload any, secretSigningKey string) (string, error) {

@@ -306,17 +306,17 @@ func Test_SignUp_Route(t *testing.T) {
 		assert.NotZero(t, account.UpdatedAt)
 		assert.Equal(t, int64(0), account.Balance)
 
-		// check access token in redis
-		accessTokenCacheKeyPattern := fmt.Sprintf("auth:access_token_id:*:user_id:%s", user.ID)
-		matchingKeys, _, err := app.Cache.Scan(t.Context(), 0, accessTokenCacheKeyPattern, 1)
+		// verify the access token that is returned in response and check its existence in cache
+		tokenData, err := app.Services.AuthenticationService.VerifyAccessToken(t.Context(), response.AccessToken)
 		assert.Equal(t, nil, err)
+		assert.NotZero(t, tokenData.UserID)
+		assert.NotZero(t, tokenData.TokenID)
 
-		found := false
-		for _, key := range matchingKeys {
-			if key != "" {
-				found = true
-			}
-		}
-		assert.Equal(t, true, found)
+		assert.Equal(t, user.ID.String(), tokenData.UserID)
+
+		accessTokenCacheKey := fmt.Sprintf("auth:access_token_id:%s:user_id:%s", tokenData.TokenID, user.ID)
+		tokenInCache, err := app.Cache.Get(t.Context(), accessTokenCacheKey)
+		assert.Equal(t, nil, err)
+		assert.Equal(t, "", tokenInCache)
 	})
 }
