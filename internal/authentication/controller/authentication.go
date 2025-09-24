@@ -99,7 +99,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		logger.Error(requestCtx, "Unable to create SendWelcomeEmailTask, error: %+v", err)
 	}
 
-	taskInfo, err := c.asynqService.Enqueue(task, asynq.Queue(worker.DefaultQueue))
+	taskInfo, err := c.asynqService.Enqueue(task, asynq.Queue(worker.DefaultQueue), asynq.MaxRetry(1))
 	if err != nil {
 		logger.Error(requestCtx, "Unable to enqueue SendWelcomeEmailTask, error: %+v", err)
 	} else {
