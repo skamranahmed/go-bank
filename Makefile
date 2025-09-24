@@ -61,7 +61,7 @@ test:
     # Force sequential test package execution to prevent extensive resource consumption
     # Without `-p 1`, multiple test packages (authentication, healthz) would run concurrently,
     # each spinning up separate test containers and consuming excessive resources 	 	
-	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg -- -p 1 -v ./...
+	ENVIRONMENT=test gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg -- -p 1 -v ./...
 
 # Run all tests in a specific package or multiple packages
 # eg: make test-pkgs pkgs=./tests/healthz
@@ -73,7 +73,7 @@ test-pkgs:
     # Force sequential test package execution to prevent extensive resource consumption
     # Without `-p 1`, multiple test packages (authentication, healthz) would run concurrently,
     # each spinning up separate test containers and consuming excessive resources
-	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg -- -p 1 $(pkgs)
+	ENVIRONMENT=test gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg -- -p 1 $(pkgs)
 
 # Run a specific test in a specific package
 # eg: make test-one pkg=./tests/healthz name=Test_CheckHealth
@@ -82,4 +82,4 @@ test-one:
 	test -n "$(pkg)" || (echo "Missing argument: pkg. Example: make test-one pkg=./tests/healthz name=Test_CheckHealth" && exit 1)
 	test -n "$(name)" || (echo "Missing argument: name. Example: make test-one pkg=./tests/healthz name=Test_CheckHealth" && exit 1)
 	go clean -testcache
-	gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg $(pkg) -run $(name)
+	ENVIRONMENT=test gotestsum --format $(TEST_FORMAT) --format-icons hivis --format-hide-empty-pkg $(pkg) -run $(name)
