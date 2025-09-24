@@ -76,7 +76,7 @@ func Test_SignUp_Route(t *testing.T) {
 	fixtures, err := testfixtures.New(
 		testfixtures.Database(app.Db.DB),
 		testfixtures.Dialect("postgres"),
-		testfixtures.Directory("SignUp_test_fixtures"),
+		testfixtures.Directory("./fixtures/SignUp_test"),
 	)
 	if err != nil {
 		t.Fatal(err)
