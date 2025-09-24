@@ -15,6 +15,7 @@ var (
 	k      = koanf.New(".")
 	once   sync.Once
 	config Config
+	Role   string // server, worker-default or worker-priority,
 )
 
 const (

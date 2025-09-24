@@ -103,6 +103,7 @@ func newZerologLogger() Logger {
 		Level(logLevel).
 		With().
 		Timestamp().
+		Str("role", config.Role). // this will be helpful to filter out logs from server or worker in Kibana
 		CallerWithSkipFrameCount(4).
 		Logger()
 

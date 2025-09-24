@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/skamranahmed/go-bank/cmd/router"
 	"github.com/skamranahmed/go-bank/config"
@@ -51,8 +52,14 @@ type TestApp struct {
 func NewApp(ctx context.Context, postresTestContainer *PostgresTestContainer, redisTestContainer *RedisTestContainer) TestApp {
 	testDb := setupPostgresDb(ctx, postresTestContainer)
 	testCache := setupRedis(ctx, redisTestContainer)
+	asyncqClient := asynq.NewClient(asynq.RedisClientOpt{
+		Addr: fmt.Sprintf("localhost:%s", redisTestContainer.MappedPort),
+	})
 
-	services, _ := internal.BootstrapServices(testDb, testCache)
+	services, err := internal.BootstrapServices(testDb, testCache, asyncqClient)
+	if err != nil {
+		logger.Fatal(ctx, "Unable to bootstrap services, error: %+v", err)
+	}
 	testRouter := router.Init(testDb, services)
 
 	return TestApp{

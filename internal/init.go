@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/hibiken/asynq"
 	accountRepository "github.com/skamranahmed/go-bank/internal/account/repository"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
@@ -12,13 +13,14 @@ import (
 )
 
 type Services struct {
-	HealthzService        healthzService.HealthzService
-	AuthenticationService authenticationService.AuthenticationService
-	UserService           userService.UserService
 	AccountService        accountService.AccountService
+	AsynqService          *asynq.Client // client for enqueuing background tasks
+	AuthenticationService authenticationService.AuthenticationService
+	HealthzService        healthzService.HealthzService
+	UserService           userService.UserService
 }
 
-func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient) (*Services, error) {
+func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient, asynqClient *asynq.Client) (*Services, error) {
 	// healthz service
 	healthzService := healthzService.NewHealthzService(db, cacheClient)
 
@@ -34,9 +36,10 @@ func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient) (*Services, er
 	accountService := accountService.NewAccountService(db, accountRepository)
 
 	return &Services{
-		HealthzService:        healthzService,
-		AuthenticationService: authenticationService,
-		UserService:           userService,
 		AccountService:        accountService,
+		AsynqService:          asynqClient,
+		AuthenticationService: authenticationService,
+		HealthzService:        healthzService,
+		UserService:           userService,
 	}, nil
 }

@@ -37,6 +37,7 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 		AuthenticationService: services.AuthenticationService,
 		UserService:           services.UserService,
 		AccountService:        services.AccountService,
+		AsynqService:          services.AsynqService,
 	})
 
 	return router

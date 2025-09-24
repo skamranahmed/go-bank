@@ -6,11 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/cmd/server"
+	"github.com/skamranahmed/go-bank/cmd/worker"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
+	userTasks "github.com/skamranahmed/go-bank/internal/user/tasks"
+	"github.com/skamranahmed/go-bank/pkg/logger"
 	"github.com/uptrace/bun"
 )
 
@@ -19,6 +23,7 @@ type authenticationController struct {
 	authenticationService authenticationService.AuthenticationService
 	userService           userService.UserService
 	accountService        accountService.AccountService
+	asynqService          *asynq.Client
 }
 
 func newAuthenticationController(dependency Dependency) AuthenticationController {
@@ -27,6 +32,7 @@ func newAuthenticationController(dependency Dependency) AuthenticationController
 		authenticationService: dependency.AuthenticationService,
 		userService:           dependency.UserService,
 		accountService:        dependency.AccountService,
+		asynqService:          dependency.AsynqService,
 	}
 }
 
@@ -39,8 +45,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		return
 	}
 
-	var accessToken string
-
+	var userID, accessToken string
 	err := c.db.RunInTx(requestCtx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 	}, func(ctx context.Context, tx bun.Tx) error {
@@ -49,6 +54,8 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		if err != nil {
 			return err
 		}
+
+		userID = userDto.ID.String()
 
 		// create an account for user
 		err = c.accountService.CreateAccount(requestCtx, tx, userDto.ID)
@@ -84,6 +91,19 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	if err != nil {
 		server.SendErrorResponse(ginCtx, err)
 		return
+	}
+
+	// send welcome email task
+	task, err := userTasks.NewSendWelcomeEmailTask(requestCtx, userID)
+	if err != nil {
+		logger.Error(requestCtx, "Unable to create SendWelcomeEmailTask, error: %+v", err)
+	}
+
+	taskInfo, err := c.asynqService.Enqueue(task, asynq.Queue(worker.DefaultQueue))
+	if err != nil {
+		logger.Error(requestCtx, "Unable to enqueue SendWelcomeEmailTask, error: %+v", err)
+	} else {
+		logger.Info(requestCtx, "Enqueued SendWelcomeEmailTask for userID: %+v, taskID: %+v, queue: %+v", userID, taskInfo.ID, taskInfo.Queue)
 	}
 
 	server.SendSuccessResponse(ginCtx, http.StatusCreated, dto.SignUpResponse{
