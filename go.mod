@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
+	github.com/bsm/redislock v0.9.4
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.20.0
 	github.com/go-testfixtures/testfixtures/v3 v3.18.0
