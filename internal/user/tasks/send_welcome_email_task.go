@@ -6,50 +6,43 @@ import (
 	"fmt"
 
 	"github.com/hibiken/asynq"
-	account "github.com/skamranahmed/go-bank/internal/account/service"
-	user "github.com/skamranahmed/go-bank/internal/user/service"
+	"github.com/skamranahmed/go-bank/internal"
 	"github.com/skamranahmed/go-bank/pkg/logger"
+	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 )
 
-const SendWelcomeEmailTaskName string = "send-welcome-email"
+const SendWelcomeEmailTaskName string = "task:send_welcome_email"
 
 type SendWelcomeEmailTaskPayload struct {
-	CorrelationID string
-	UserID        string
-}
-
-func NewSendWelcomeEmailTask(ctx context.Context, userID string) (*asynq.Task, error) {
-	val := ctx.Value("correlation_id")
-	correlationID, ok := val.(string)
-	if !ok {
-		correlationID = ""
-	}
-
-	payload, err := json.Marshal(SendWelcomeEmailTaskPayload{
-		CorrelationID: correlationID,
-		UserID:        userID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return asynq.NewTask(SendWelcomeEmailTaskName, payload), nil
+	UserID string
 }
 
 type SendWelcomeEmailTaskProcessor struct {
-	userService    user.UserService
-	accountService account.AccountService
+	services *internal.Services
 }
 
-func NewSendWelcomeEmailTaskProcessor(userService *user.UserService, accountService *account.AccountService) *SendWelcomeEmailTaskProcessor {
+func NewSendWelcomeEmailTask(ctx context.Context, payload SendWelcomeEmailTaskPayload) (*asynq.Task, error) {
+	defaultTaskOptions := []asynq.Option{
+		asynq.MaxRetry(1),
+		asynq.Queue(tasksHelper.DefaultQueue),
+	}
+
+	return tasksHelper.New(
+		ctx,
+		SendWelcomeEmailTaskName,
+		payload,
+		defaultTaskOptions...,
+	)
+}
+
+func NewSendWelcomeEmailTaskProcessor(services *internal.Services) *SendWelcomeEmailTaskProcessor {
 	return &SendWelcomeEmailTaskProcessor{
-		userService:    *userService,
-		accountService: *accountService,
+		services: services,
 	}
 }
 
 func (processor *SendWelcomeEmailTaskProcessor) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	var payload SendWelcomeEmailTaskPayload
+	var payload tasksHelper.Payload[SendWelcomeEmailTaskPayload]
 	err := json.Unmarshal(t.Payload(), &payload)
 	if err != nil {
 		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
@@ -58,6 +51,6 @@ func (processor *SendWelcomeEmailTaskProcessor) ProcessTask(ctx context.Context,
 	ctx = context.WithValue(ctx, "correlation_id", payload.CorrelationID)
 
 	// TODO: maybe add a real email provider here in the future
-	logger.Info(ctx, "[Dummy] send welcome email to userID: %+v", payload.UserID)
+	logger.Info(ctx, "[Dummy] send welcome email to userID: %+v", payload.Data.UserID)
 	return nil
 }

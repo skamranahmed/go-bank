@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/cmd/server"
-	"github.com/skamranahmed/go-bank/cmd/worker"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
@@ -94,12 +93,14 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	}
 
 	// send welcome email task
-	task, err := userTasks.NewSendWelcomeEmailTask(requestCtx, userID)
+	task, err := userTasks.NewSendWelcomeEmailTask(requestCtx, userTasks.SendWelcomeEmailTaskPayload{
+		UserID: userID,
+	})
 	if err != nil {
 		logger.Error(requestCtx, "Unable to create SendWelcomeEmailTask, error: %+v", err)
 	}
 
-	taskInfo, err := c.asynqService.Enqueue(task, asynq.Queue(worker.DefaultQueue), asynq.MaxRetry(1))
+	taskInfo, err := c.asynqService.Enqueue(task)
 	if err != nil {
 		logger.Error(requestCtx, "Unable to enqueue SendWelcomeEmailTask, error: %+v", err)
 	} else {

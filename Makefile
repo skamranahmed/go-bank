@@ -9,6 +9,14 @@ run:
 	go mod tidy
 	go run main.go
 
+.PHONY: run-worker
+run-worker:
+	go run main.go --role=worker-default
+
+.PHONY: run-worker-priority
+run-worker-priority:
+	go run main.go --role=worker-priority
+
 .PHONY: up
 up:
 	docker compose up -d

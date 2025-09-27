@@ -13,6 +13,7 @@ import (
 	"github.com/skamranahmed/go-bank/pkg/cache"
 	"github.com/skamranahmed/go-bank/pkg/database"
 	"github.com/skamranahmed/go-bank/pkg/logger"
+	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 )
 
 const (
@@ -75,12 +76,12 @@ func Run(role string) error {
 
 	if role == RoleWorkerDefault {
 		// start worker that will consume tasks from the "default" queue
-		worker.Start(worker.DefaultQueue, services)
+		worker.Start(tasksHelper.DefaultQueue, services)
 	}
 
 	if role == RoleWorkerPriority {
 		// start worker that will consume tasks from the "priority" queue
-		worker.Start(worker.PriorityQueue, services)
+		worker.Start(tasksHelper.PriorityQueue, services)
 	}
 
 	return nil
