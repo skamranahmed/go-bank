@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"github.com/hibiken/asynq"
 	accountRepository "github.com/skamranahmed/go-bank/internal/account/repository"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
@@ -9,18 +8,19 @@ import (
 	userRepository "github.com/skamranahmed/go-bank/internal/user/repository"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	"github.com/skamranahmed/go-bank/pkg/cache"
+	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 	"github.com/uptrace/bun"
 )
 
 type Services struct {
 	AccountService        accountService.AccountService
-	AsynqService          *asynq.Client // client for enqueuing background tasks
 	AuthenticationService authenticationService.AuthenticationService
 	HealthzService        healthzService.HealthzService
+	TaskEnqueuer          tasksHelper.TaskEnqueuer
 	UserService           userService.UserService
 }
 
-func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient, asynqClient *asynq.Client) (*Services, error) {
+func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient, taskEnqueuer tasksHelper.TaskEnqueuer) (*Services, error) {
 	// healthz service
 	healthzService := healthzService.NewHealthzService(db, cacheClient)
 
@@ -37,9 +37,9 @@ func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient, asynqClient *a
 
 	return &Services{
 		AccountService:        accountService,
-		AsynqService:          asynqClient,
 		AuthenticationService: authenticationService,
 		HealthzService:        healthzService,
+		TaskEnqueuer:          taskEnqueuer,
 		UserService:           userService,
 	}, nil
 }

@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/cmd/server"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
@@ -14,6 +13,7 @@ import (
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	userTasks "github.com/skamranahmed/go-bank/internal/user/tasks"
 	"github.com/skamranahmed/go-bank/pkg/logger"
+	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 	"github.com/uptrace/bun"
 )
 
@@ -22,7 +22,7 @@ type authenticationController struct {
 	authenticationService authenticationService.AuthenticationService
 	userService           userService.UserService
 	accountService        accountService.AccountService
-	asynqService          *asynq.Client
+	taskEnqueuer          tasksHelper.TaskEnqueuer
 }
 
 func newAuthenticationController(dependency Dependency) AuthenticationController {
@@ -31,7 +31,7 @@ func newAuthenticationController(dependency Dependency) AuthenticationController
 		authenticationService: dependency.AuthenticationService,
 		userService:           dependency.UserService,
 		accountService:        dependency.AccountService,
-		asynqService:          dependency.AsynqService,
+		taskEnqueuer:          dependency.TaskEnqueuer,
 	}
 }
 
@@ -100,7 +100,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		logger.Error(requestCtx, "Unable to create SendWelcomeEmailTask, error: %+v", err)
 	}
 
-	taskInfo, err := c.asynqService.Enqueue(task)
+	taskInfo, err := c.taskEnqueuer.Enqueue(task)
 	if err != nil {
 		logger.Error(requestCtx, "Unable to enqueue SendWelcomeEmailTask, error: %+v", err)
 	} else {

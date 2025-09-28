@@ -57,14 +57,14 @@ func Run(role string) error {
 	}
 	defer cacheClient.Close()
 
-	asyncqClient := asynq.NewClient(asynq.RedisClientOpt{
+	taskEnqueuer := tasksHelper.NewAsynqTaskEnqueuer(asynq.RedisClientOpt{
 		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
 		Password: redisConfig.Password,
 		DB:       redisConfig.DbIndex,
 	})
-	defer asyncqClient.Close()
+	defer taskEnqueuer.Close()
 
-	services, err := internal.BootstrapServices(db, cacheClient, asyncqClient)
+	services, err := internal.BootstrapServices(db, cacheClient, taskEnqueuer)
 	if err != nil {
 		return err
 	}
