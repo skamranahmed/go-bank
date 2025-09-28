@@ -16,6 +16,7 @@ import (
 	userModel "github.com/skamranahmed/go-bank/internal/user/model"
 	"github.com/skamranahmed/go-bank/pkg/cache"
 	"github.com/skamranahmed/go-bank/pkg/logger"
+	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/uptrace/bun"
@@ -50,27 +51,63 @@ type TestApp struct {
 	TeardownFunc func()
 }
 
-func NewApp(ctx context.Context, postresTestContainer *PostgresTestContainer, redisTestContainer *RedisTestContainer) TestApp {
-	testDb := setupPostgresDb(ctx, postresTestContainer)
-	testCache := setupRedis(ctx, redisTestContainer)
-	asyncqClient := asynq.NewClient(asynq.RedisClientOpt{
-		Addr: fmt.Sprintf("localhost:%s", redisTestContainer.MappedPort),
-	})
+type TestAppDeps struct {
+	Db           *bun.DB
+	Cache        cache.CacheClient
+	TaskEnqueuer tasksHelper.TaskEnqueuer
+}
 
-	services, err := internal.BootstrapServices(testDb, testCache, asyncqClient)
+// NewTestApp creates a TestApp for testing.
+// Supports optional dependency injection via deps
+func NewTestApp(ctx context.Context, deps *TestAppDeps, postresTestContainer *PostgresTestContainer, redisTestContainer *RedisTestContainer) TestApp {
+	var db *bun.DB
+	var cache cache.CacheClient
+	var taskEnqueuer tasksHelper.TaskEnqueuer
+
+	if deps != nil {
+		// use provided dependencies if available
+		if deps.TaskEnqueuer != nil {
+			taskEnqueuer = deps.TaskEnqueuer
+		}
+
+		if deps.Db != nil {
+			db = deps.Db
+		}
+
+		if deps.Cache != nil {
+			cache = deps.Cache
+		}
+	}
+
+	// fallback to real implementations if nil
+	if taskEnqueuer == nil {
+		taskEnqueuer = asynq.NewClient(asynq.RedisClientOpt{
+			Addr: fmt.Sprintf("localhost:%s", redisTestContainer.MappedPort),
+		})
+	}
+
+	if db == nil {
+		db = setupPostgresDb(ctx, postresTestContainer)
+	}
+
+	if cache == nil {
+		cache = setupRedis(ctx, redisTestContainer)
+	}
+
+	services, err := internal.BootstrapServices(db, cache, taskEnqueuer)
 	if err != nil {
 		logger.Fatal(ctx, "Unable to bootstrap services, error: %+v", err)
 	}
-	testRouter := router.Init(testDb, services)
+	testRouter := router.Init(db, services)
 
 	return TestApp{
-		Db:       testDb,
-		Cache:    testCache,
+		Db:       db,
+		Cache:    cache,
 		Services: services,
 		Router:   testRouter,
 		TeardownFunc: func() {
-			testDb.Close()
-			testCache.Close()
+			db.Close()
+			cache.Close()
 		},
 	}
 }

@@ -15,7 +15,7 @@ func Test_CheckHealth(t *testing.T) {
 	ctx := context.TODO()
 
 	t.Run("when database is down: it should return 500 status code and a response body with status: DB_NOT_OK", func(t *testing.T) {
-		app := testutils.NewApp(ctx, postgresTestContainer, redisTestContainer)
+		app := testutils.NewTestApp(ctx, nil, postgresTestContainer, redisTestContainer)
 		defer app.TeardownFunc()
 
 		// close the db connection to simulate db down behaviour
@@ -42,7 +42,7 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("when cache is down: it should return 500 status code and a response body with status: CACHE_NOT_OK", func(t *testing.T) {
-		app := testutils.NewApp(ctx, postgresTestContainer, redisTestContainer)
+		app := testutils.NewTestApp(ctx, nil, postgresTestContainer, redisTestContainer)
 		defer app.TeardownFunc()
 
 		// close the cache connection to simulate cache down behaviour
@@ -69,7 +69,7 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("when everything is up and running: it should return 200 status code and a response body with status: ALL_OK", func(t *testing.T) {
-		app := testutils.NewApp(ctx, postgresTestContainer, redisTestContainer)
+		app := testutils.NewTestApp(ctx, nil, postgresTestContainer, redisTestContainer)
 		defer app.TeardownFunc()
 
 		req, _ := http.NewRequest(http.MethodGet, "/healthz", nil)

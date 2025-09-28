@@ -10,11 +10,14 @@ import (
 	"testing"
 
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/hibiken/asynq"
 	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	userModel "github.com/skamranahmed/go-bank/internal/user/model"
+	"github.com/skamranahmed/go-bank/mock"
 	"github.com/skamranahmed/go-bank/pkg/testutils"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type ErrorResponse struct {
@@ -70,7 +73,7 @@ func assertFieldError(t *testing.T, resp ErrorResponse, field string, expectedEr
 func Test_SignUp_Route(t *testing.T) {
 	ctx := context.TODO()
 
-	app := testutils.NewApp(ctx, postgresTestContainer, redisTestContainer)
+	app := testutils.NewTestApp(ctx, nil, postgresTestContainer, redisTestContainer)
 	defer app.TeardownFunc()
 
 	fixtures, err := testfixtures.New(
@@ -252,13 +255,33 @@ func Test_SignUp_Route(t *testing.T) {
 
 	// happy path
 	t.Run("when the request payload is correct: it should return 200 status code and the user record, account record and access token must be created", func(t *testing.T) {
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockTaskEnqueuer := mock.NewMockTaskEnqueuer(mockController)
+		mockTaskEnqueuer.EXPECT().
+			Enqueue(gomock.Any()).
+			Return(&asynq.TaskInfo{}, nil).
+			Times(1)
+
+		appWithMock := testutils.NewTestApp(
+			ctx,
+			&testutils.TestAppDeps{
+				Db:           app.Db,           // reuse the db from the app
+				Cache:        app.Cache,        // reuse the cache from the app
+				TaskEnqueuer: mockTaskEnqueuer, // inject mock TaskEnqueuer to verify task enqueuing
+			},
+			nil,
+			nil,
+		)
+
 		// prepare payload
 		reqBody := dto.SignUpRequest{}
 		reqBody.Data.Email = "test_user_1@example.com"
 		reqBody.Data.Username = "username" // 8 chars
 		reqBody.Data.Password = "password" // 8 chars
 
-		w := makeRequest(t, app, reqBody)
+		w := makeRequest(t, appWithMock, reqBody)
 		assert.Equal(t, http.StatusCreated, w.Code)
 
 		var response SuccessResponse
@@ -271,7 +294,7 @@ func Test_SignUp_Route(t *testing.T) {
 
 		// check user record
 		var user userModel.User
-		err = app.Db.NewSelect().
+		err = appWithMock.Db.NewSelect().
 			Model(&user).
 			Where("email = ?", "test_user_1@example.com").
 			Limit(1).
@@ -291,7 +314,7 @@ func Test_SignUp_Route(t *testing.T) {
 
 		// check account record
 		var account accountModel.Account
-		err = app.Db.NewSelect().
+		err = appWithMock.Db.NewSelect().
 			Model(&account).
 			Where("user_id = ?", user.ID).
 			Limit(1).
@@ -307,7 +330,7 @@ func Test_SignUp_Route(t *testing.T) {
 		assert.Equal(t, int64(0), account.Balance)
 
 		// verify the access token that is returned in response and check its existence in cache
-		tokenData, err := app.Services.AuthenticationService.VerifyAccessToken(t.Context(), response.AccessToken)
+		tokenData, err := appWithMock.Services.AuthenticationService.VerifyAccessToken(t.Context(), response.AccessToken)
 		assert.Equal(t, nil, err)
 		assert.NotZero(t, tokenData.UserID)
 		assert.NotZero(t, tokenData.TokenID)
@@ -315,7 +338,7 @@ func Test_SignUp_Route(t *testing.T) {
 		assert.Equal(t, user.ID.String(), tokenData.UserID)
 
 		accessTokenCacheKey := fmt.Sprintf("auth:access_token_id:%s:user_id:%s", tokenData.TokenID, user.ID)
-		tokenInCache, err := app.Cache.Get(t.Context(), accessTokenCacheKey)
+		tokenInCache, err := appWithMock.Cache.Get(t.Context(), accessTokenCacheKey)
 		assert.Equal(t, nil, err)
 		assert.Equal(t, "", tokenInCache)
 	})
