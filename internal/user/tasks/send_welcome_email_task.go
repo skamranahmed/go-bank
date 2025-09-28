@@ -17,22 +17,42 @@ type SendWelcomeEmailTaskPayload struct {
 	UserID string
 }
 
-type SendWelcomeEmailTaskProcessor struct {
-	services *internal.Services
+type SendWelcomeEmailTask struct {
+	name          string
+	queue         string
+	maxRetryCount int
+	payload       SendWelcomeEmailTaskPayload
 }
 
-func NewSendWelcomeEmailTask(ctx context.Context, payload SendWelcomeEmailTaskPayload) (*asynq.Task, error) {
-	defaultTaskOptions := []asynq.Option{
-		asynq.MaxRetry(1),
-		asynq.Queue(tasksHelper.DefaultQueue),
+func NewSendWelcomeEmailTask(userID string) tasksHelper.Task {
+	return &SendWelcomeEmailTask{
+		name:          SendWelcomeEmailTaskName,
+		maxRetryCount: 1,
+		queue:         tasksHelper.DefaultQueue,
+		payload: SendWelcomeEmailTaskPayload{
+			UserID: userID,
+		},
 	}
+}
 
-	return tasksHelper.New(
-		ctx,
-		SendWelcomeEmailTaskName,
-		payload,
-		defaultTaskOptions...,
-	)
+func (t *SendWelcomeEmailTask) Name() string {
+	return t.name
+}
+
+func (t *SendWelcomeEmailTask) Queue() string {
+	return t.queue
+}
+
+func (t *SendWelcomeEmailTask) MaxRetryCount() int {
+	return t.maxRetryCount
+}
+
+func (t *SendWelcomeEmailTask) Payload() any {
+	return t.payload
+}
+
+type SendWelcomeEmailTaskProcessor struct {
+	services *internal.Services
 }
 
 func NewSendWelcomeEmailTaskProcessor(services *internal.Services) *SendWelcomeEmailTaskProcessor {

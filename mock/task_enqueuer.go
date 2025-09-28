@@ -10,9 +10,11 @@
 package mock
 
 import (
+	context "context"
 	reflect "reflect"
 
 	asynq "github.com/hibiken/asynq"
+	tasks "github.com/skamranahmed/go-bank/pkg/tasks"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -55,9 +57,9 @@ func (mr *MockTaskEnqueuerMockRecorder) Close() *gomock.Call {
 }
 
 // Enqueue mocks base method.
-func (m *MockTaskEnqueuer) Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
+func (m *MockTaskEnqueuer) Enqueue(ctx context.Context, task tasks.Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{task}
+	varargs := []any{ctx, task}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -68,8 +70,28 @@ func (m *MockTaskEnqueuer) Enqueue(task *asynq.Task, opts ...asynq.Option) (*asy
 }
 
 // Enqueue indicates an expected call of Enqueue.
-func (mr *MockTaskEnqueuerMockRecorder) Enqueue(task any, opts ...any) *gomock.Call {
+func (mr *MockTaskEnqueuerMockRecorder) Enqueue(ctx, task any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, task}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockTaskEnqueuer)(nil).Enqueue), varargs...)
+}
+
+// EnqueueOld mocks base method.
+func (m *MockTaskEnqueuer) EnqueueOld(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{task}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EnqueueOld", varargs...)
+	ret0, _ := ret[0].(*asynq.TaskInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnqueueOld indicates an expected call of EnqueueOld.
+func (mr *MockTaskEnqueuerMockRecorder) EnqueueOld(task any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{task}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockTaskEnqueuer)(nil).Enqueue), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueOld", reflect.TypeOf((*MockTaskEnqueuer)(nil).EnqueueOld), varargs...)
 }

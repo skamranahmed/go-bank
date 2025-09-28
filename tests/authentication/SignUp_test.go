@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,7 +12,10 @@ import (
 	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	userModel "github.com/skamranahmed/go-bank/internal/user/model"
+
+	userTasks "github.com/skamranahmed/go-bank/internal/user/tasks"
 	"github.com/skamranahmed/go-bank/mock"
+	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 	"github.com/skamranahmed/go-bank/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -251,10 +255,14 @@ func (suite *SignUpTestSuite) TestSuccessfulSignUp() {
 		mockController := gomock.NewController(t)
 		defer mockController.Finish()
 
-		mockTaskEnqueuer := mock.NewMockTaskEnqueuer(mockController)
 		// setup expectations for task enqueuing
+		var enqueuedTask tasksHelper.Task
+		mockTaskEnqueuer := mock.NewMockTaskEnqueuer(mockController)
 		mockTaskEnqueuer.EXPECT().
-			Enqueue(gomock.Any()).
+			Enqueue(gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, task tasksHelper.Task, opts ...asynq.Option) {
+				enqueuedTask = task
+			}).
 			Return(&asynq.TaskInfo{}, nil).
 			Times(1)
 
@@ -338,5 +346,11 @@ func (suite *SignUpTestSuite) TestSuccessfulSignUp() {
 		tokenInCache, err := appWithMock.Cache.Get(t.Context(), accessTokenCacheKey)
 		assert.Equal(t, nil, err)
 		assert.Equal(t, "", tokenInCache)
+
+		// assert enqueued task details
+		assert.Equal(t, userTasks.SendWelcomeEmailTaskName, enqueuedTask.Name())
+		enqueuedTaskPayload, ok := enqueuedTask.Payload().(userTasks.SendWelcomeEmailTaskPayload)
+		assert.Equal(t, true, ok)
+		assert.Equal(t, user.ID.String(), enqueuedTaskPayload.UserID)
 	})
 }

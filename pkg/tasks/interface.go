@@ -1,8 +1,19 @@
 package tasks
 
-import "github.com/hibiken/asynq"
+import (
+	"context"
+
+	"github.com/hibiken/asynq"
+)
+
+type Task interface {
+	Name() string
+	Queue() string
+	MaxRetryCount() int
+	Payload() any
+}
 
 type TaskEnqueuer interface {
-	Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+	Enqueue(ctx context.Context, task Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
 	Close() error
 }

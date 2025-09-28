@@ -81,7 +81,7 @@ func NewTestApp(ctx context.Context, deps *TestAppDeps, postresTestContainer *Po
 
 	// fallback to real implementations if nil
 	if taskEnqueuer == nil {
-		taskEnqueuer = asynq.NewClient(asynq.RedisClientOpt{
+		taskEnqueuer = tasksHelper.NewAsynqTaskEnqueuer(asynq.RedisClientOpt{
 			Addr: fmt.Sprintf("localhost:%s", redisTestContainer.MappedPort),
 		})
 	}

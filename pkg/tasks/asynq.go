@@ -1,6 +1,9 @@
 package tasks
 
 import (
+	"context"
+	"encoding/json"
+
 	"github.com/hibiken/asynq"
 )
 
@@ -16,10 +19,44 @@ func NewAsynqTaskEnqueuer(opt asynq.RedisConnOpt) TaskEnqueuer {
 	}
 }
 
-func (t *asynqTaskEnqueuer) Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
-	return t.client.Enqueue(task, opts...)
+func (t *asynqTaskEnqueuer) Enqueue(ctx context.Context, task Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
+	queue := task.Queue()
+	if queue == "" {
+		queue = DefaultQueue
+	}
+
+	defaultTaskOptions := []asynq.Option{
+		asynq.MaxRetry(task.MaxRetryCount()),
+		asynq.Queue(queue),
+	}
+
+	// Merge default options with caller-provided options
+	// If the same option appears in both, the caller's value takes precedence
+	taskOptions := append(defaultTaskOptions, opts...)
+
+	taskToBeEnqueued, err := newAsynqTask(ctx, task.Name(), task.Payload(), taskOptions...)
+	if err != nil {
+		return nil, err
+	}
+	return t.client.EnqueueContext(ctx, taskToBeEnqueued)
 }
 
 func (t *asynqTaskEnqueuer) Close() error {
 	return t.client.Close()
+}
+
+func newAsynqTask[T any](ctx context.Context, name string, data T, opts ...asynq.Option) (*asynq.Task, error) {
+	val := ctx.Value("correlation_id")
+	correlationID, ok := val.(string)
+	if !ok {
+		correlationID = ""
+	}
+
+	payload := Payload[T]{CorrelationID: correlationID, Data: data}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return asynq.NewTask(name, payloadBytes, opts...), nil
 }
