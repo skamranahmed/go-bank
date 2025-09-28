@@ -13,10 +13,12 @@ import (
 )
 
 func Init(db *bun.DB, services *internal.Services) *gin.Engine {
+	environment := config.GetEnvironment()
+
 	// register prometheus metrics
 	metrics.Register()
 
-	if config.GetEnvironment() == config.APP_ENVIRONMENT_LOCAL {
+	if environment == config.APP_ENVIRONMENT_LOCAL {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
@@ -24,7 +26,10 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 
 	router := gin.New()
 	router.Use(gin.Recovery())
-	router.Use(middleware.RequestLoggerMiddleware())
+
+	if environment != config.APP_ENVIRONMENT_TEST {
+		router.Use(middleware.RequestLoggerMiddleware())
+	}
 
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
