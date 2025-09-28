@@ -1,12 +1,9 @@
 package authentication
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/go-testfixtures/testfixtures/v3"
@@ -17,275 +14,275 @@ import (
 	"github.com/skamranahmed/go-bank/mock"
 	"github.com/skamranahmed/go-bank/pkg/testutils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 )
 
-type ErrorResponse struct {
-	Error struct {
-		StatusCode int `json:"status_code"`
-		Details    any `json:"details"`
-	} `json:"error"`
+// Define your test suite struct
+type SignUpTestSuite struct {
+	suite.Suite
+	app testutils.TestApp
 }
 
-type SuccessResponse struct {
-	AccessToken string `json:"access_token"`
+// This function actually runs the test suite
+func TestSignUpTestSuite(t *testing.T) {
+	suite.Run(t, new(SignUpTestSuite))
 }
 
-func makeRequest(t *testing.T, app testutils.TestApp, requestPayload any) *httptest.ResponseRecorder {
-	t.Helper()
+// SetupSuite runs once before all tests
+func (suite *SignUpTestSuite) SetupSuite() {
+	// setup app
+	suite.app = testutils.NewTestApp(suite.T().Context(), nil, postgresTestContainer, redisTestContainer)
 
-	body, err := json.Marshal(requestPayload)
-	if err != nil {
-		t.Fatalf("failed to marshal body: %v", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, "/v1/sign-up", bytes.NewBuffer(body))
-	assert.Equal(t, nil, err)
-	w := httptest.NewRecorder()
-	app.Router.ServeHTTP(w, req)
-
-	return w
-}
-
-func decodeErrorResponse(t *testing.T, w *httptest.ResponseRecorder) ErrorResponse {
-	t.Helper()
-
-	var response ErrorResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
-		t.Fatalf("failed to unmarshal response: %v", err)
-	}
-	return response
-}
-
-func assertFieldError(t *testing.T, resp ErrorResponse, field string, expectedErrMsg string) {
-	t.Helper()
-
-	details, ok := resp.Error.Details.(map[string]any)
-	if !ok {
-		t.Fatalf("expected details to be a map, got %T", resp.Error.Details)
-	}
-
-	actualErrMsg, exists := details[field]
-	assert.Equal(t, true, exists)
-	assert.Equal(t, expectedErrMsg, actualErrMsg)
-}
-
-func Test_SignUp_Route(t *testing.T) {
-	ctx := context.TODO()
-
-	app := testutils.NewTestApp(ctx, nil, postgresTestContainer, redisTestContainer)
-	defer app.TeardownFunc()
-
+	// load fixtures
 	fixtures, err := testfixtures.New(
-		testfixtures.Database(app.Db.DB),
+		testfixtures.Database(suite.app.Db.DB),
 		testfixtures.Dialect("postgres"),
 		testfixtures.Directory("./fixtures/SignUp_test"),
 	)
 	if err != nil {
-		t.Fatal(err)
+		suite.T().Fatal(err)
 	}
 
 	err = fixtures.Load()
 	if err != nil {
-		t.Fatal(err)
+		suite.T().Fatal(err)
+	}
+}
+
+// TearDownSuite runs once after all tests
+func (suite *SignUpTestSuite) TearDownSuite() {
+	suite.app.TeardownFunc()
+}
+
+func (suite *SignUpTestSuite) TestValidationErrors() {
+	type scenario struct {
+		name               string
+		payload            dto.SignUpRequest
+		field              string
+		errMessage         string
+		expectedStatusCode int
 	}
 
-	// unhappy paths
-	t.Run("when email is NOT provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Username = "username" // 8 chars
-		reqBody.Data.Password = "password" // 8 chars
+	tests := []scenario{
+		{
+			name: "missing email",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Username: "username",
+					Password: "password",
+				},
+			},
+			field:              "email",
+			errMessage:         "email is a required field",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "empty email",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "",
+					Username: "username",
+					Password: "password",
+				},
+			},
+			field:              "email",
+			errMessage:         "email is a required field",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "invalid email",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "not_an_email",
+					Username: "username",
+					Password: "password",
+				},
+			},
+			field:              "email",
+			errMessage:         "not_an_email is not a valid email",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "missing username",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Password: "password",
+				},
+			},
+			field:              "username",
+			errMessage:         "username is a required field",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "empty username",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Username: "",
+					Password: "password",
+				},
+			},
+			field:              "username",
+			errMessage:         "username is a required field",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "short username (less than 8 characters)",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Username: "user",
+					Password: "password",
+				},
+			},
+			field:              "username",
+			errMessage:         "username must be at least 8 characters",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "missing password",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Username: "username",
+				},
+			},
+			field:              "password",
+			errMessage:         "password is a required field",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "empty password",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Username: "username",
+					Password: "",
+				},
+			},
+			field:              "password",
+			errMessage:         "password is a required field",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "short password (less than 8 characters)",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Username: "username",
+					Password: "pass",
+				},
+			},
+			field:              "password",
+			errMessage:         "password must be at least 8 characters",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+	}
 
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+	for _, tc := range tests {
+		suite.T().Run(tc.name, func(t *testing.T) {
+			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/sign-up", http.MethodPost, tc.payload)
+			assert.Equal(t, tc.expectedStatusCode, responseRecorder.Code)
 
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "email", "email is a required field")
-	})
+			response := testutils.DecodeErrorResponse(t, responseRecorder)
+			testutils.AssertFieldError(t, response, tc.field, tc.errMessage)
+		})
+	}
 
-	t.Run("when empty email string is provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = ""
-		reqBody.Data.Username = "username" // 8 chars
-		reqBody.Data.Password = "password" // 8 chars
+}
 
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+func (suite *SignUpTestSuite) TestConflictErrors() {
+	type scenario struct {
+		name               string
+		payload            dto.SignUpRequest
+		field              string
+		errMessage         string
+		expectedStatusCode int
+	}
 
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "email", "email is a required field")
-	})
+	tests := []scenario{
+		{
+			name: "duplicate email",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "kamran@example.com",
+					Username: "username",
+					Password: "password",
+				},
+			},
+			field:              "message",
+			errMessage:         "This username or email is already in use. Please choose another.",
+			expectedStatusCode: http.StatusConflict,
+		},
+		{
+			name: "duplicate username",
+			payload: dto.SignUpRequest{
+				Data: dto.SignUpData{
+					Email:    "test_user_1@example.com",
+					Username: "kamran_ahmed",
+					Password: "password",
+				},
+			},
+			field:              "message",
+			errMessage:         "This username or email is already in use. Please choose another.",
+			expectedStatusCode: http.StatusConflict,
+		},
+	}
 
-	t.Run("when an invalid email is provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "not_an_email" // invalid email
-		reqBody.Data.Username = "username"  // 8 chars
-		reqBody.Data.Password = "password"  // 8 chars
+	for _, tc := range tests {
+		suite.T().Run(tc.name, func(t *testing.T) {
+			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/sign-up", http.MethodPost, tc.payload)
+			assert.Equal(t, tc.expectedStatusCode, responseRecorder.Code)
 
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+			response := testutils.DecodeErrorResponse(t, responseRecorder)
+			testutils.AssertFieldError(t, response, tc.field, tc.errMessage)
+		})
+	}
+}
 
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "email", "not_an_email is not a valid email")
-	})
+func (suite *SignUpTestSuite) TestSuccessfulSignUp() {
+	type SuccessResponse struct {
+		AccessToken string `json:"access_token"`
+	}
 
-	t.Run("when username is NOT provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com" // valid email
-		reqBody.Data.Password = "password"             // 8 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "username", "username is a required field")
-	})
-
-	t.Run("when empty username string is provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com" // valid email
-		reqBody.Data.Username = ""
-		reqBody.Data.Password = "password" // 8 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "username", "username is a required field")
-	})
-
-	t.Run("when a username with less than 8 characters is provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com"
-		reqBody.Data.Username = "user"     // 4 chars
-		reqBody.Data.Password = "password" // 8 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "username", "username must be at least 8 characters")
-	})
-
-	t.Run("when password is NOT provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com" // valid email
-		reqBody.Data.Username = "username"             // 8 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "password", "password is a required field")
-	})
-
-	t.Run("when empty password string is provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com" // valid email
-		reqBody.Data.Username = "username"             // 8 chars
-		reqBody.Data.Password = ""
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "password", "password is a required field")
-	})
-
-	t.Run("when a password with less than 8 characters is provided in the request payload: it should return 400 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com"
-		reqBody.Data.Username = "username" // 8 chars
-		reqBody.Data.Password = "pass"     // 4 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusBadRequest, response.Error.StatusCode)
-		assertFieldError(t, response, "password", "password must be at least 8 characters")
-	})
-
-	t.Run("when the request payload is correct but a user with the provided email already exists: it should return 409 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "kamran@example.com"
-		reqBody.Data.Username = "username" // 8 chars
-		reqBody.Data.Password = "password" // 8 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusConflict, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusConflict, response.Error.StatusCode)
-		assertFieldError(t, response, "message", "This username or email is already in use. Please choose another.")
-	})
-
-	t.Run("when the request payload is correct but a user with the provided username already exists: it should return 409 status code", func(t *testing.T) {
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com"
-		reqBody.Data.Username = "kamran_ahmed" // > 8 chars
-		reqBody.Data.Password = "password"     // 8 chars
-
-		w := makeRequest(t, app, reqBody)
-		assert.Equal(t, http.StatusConflict, w.Code)
-
-		response := decodeErrorResponse(t, w)
-		assert.Equal(t, http.StatusConflict, response.Error.StatusCode)
-		assertFieldError(t, response, "message", "This username or email is already in use. Please choose another.")
-	})
-
-	// happy path
-	t.Run("when the request payload is correct: it should return 200 status code and the user record, account record and access token must be created", func(t *testing.T) {
+	suite.T().Run("successful signup creates user record, account record, access token, and enqueues task", func(t *testing.T) {
 		mockController := gomock.NewController(t)
 		defer mockController.Finish()
 
 		mockTaskEnqueuer := mock.NewMockTaskEnqueuer(mockController)
+		// setup expectations for task enqueuing
 		mockTaskEnqueuer.EXPECT().
 			Enqueue(gomock.Any()).
 			Return(&asynq.TaskInfo{}, nil).
 			Times(1)
 
 		appWithMock := testutils.NewTestApp(
-			ctx,
+			suite.T().Context(),
 			&testutils.TestAppDeps{
-				Db:           app.Db,           // reuse the db from the app
-				Cache:        app.Cache,        // reuse the cache from the app
+				Db:           suite.app.Db,     // reuse the db from the app
+				Cache:        suite.app.Cache,  // reuse the cache from the app
 				TaskEnqueuer: mockTaskEnqueuer, // inject mock TaskEnqueuer to verify task enqueuing
 			},
 			nil,
 			nil,
 		)
 
-		// prepare payload
-		reqBody := dto.SignUpRequest{}
-		reqBody.Data.Email = "test_user_1@example.com"
-		reqBody.Data.Username = "username" // 8 chars
-		reqBody.Data.Password = "password" // 8 chars
+		// prepare request payload
+		payload := dto.SignUpRequest{
+			Data: dto.SignUpData{
+				Email:    "test_user_1@example.com",
+				Username: "username",
+				Password: "password",
+			},
+		}
 
-		w := makeRequest(t, appWithMock, reqBody)
-		assert.Equal(t, http.StatusCreated, w.Code)
+		responseRecorder := testutils.MakeRequest(t, appWithMock, "/v1/sign-up", http.MethodPost, payload)
+		assert.Equal(t, http.StatusCreated, responseRecorder.Code)
 
 		var response SuccessResponse
-		err = json.Unmarshal(w.Body.Bytes(), &response)
+		err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal response: %v", err)
 		}
