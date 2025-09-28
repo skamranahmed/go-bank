@@ -26,14 +26,14 @@ func Start(queueName string, services *internal.Services) {
 	*/
 	workerDone := make(chan struct{}) // workerDone channel signals when worker.start() exits
 	worker := newWorker(queueName, redisConfig, services)
-	worker.start(ctx, workerDone)
+	go worker.start(ctx, workerDone)
 
 	/*
 		scheduler setup
 	*/
 	schedulerDone := make(chan struct{}) // schedulerDone channel signals when scheduler.start() exits
 	scheduler := newScheduler(redisConfig)
-	scheduler.start(ctx, schedulerDone)
+	go scheduler.start(ctx, schedulerDone)
 
 	<-workerDone // blocks until the worker stops
 	logger.Info(ctx, "Worker stopped")
@@ -68,16 +68,19 @@ func newWorker(queueName string, redisConfig config.RedisConfig, services *inter
 	}
 }
 
+/*
+start sets up task processors and runs the worker.
+It blocks until an os signal to exit the program is received.
+Once it receives a signal, it gracefully shuts down all active workers and other goroutines to process the tasks.
+*/
 func (w *worker) start(ctx context.Context, workerDone chan struct{}) {
 	w.registerTaskProcessors()
 	logger.Info(ctx, "Worker is starting")
-	go func() {
-		err := w.Run(w.TaskHandler)
-		if err != nil {
-			logger.Fatal(ctx, "Could not run worker server: %+v", err)
-		}
-		close(workerDone) // signal completion
-	}()
+	err := w.Run(w.TaskHandler)
+	if err != nil {
+		logger.Fatal(ctx, "Could not run worker server: %+v", err)
+	}
+	close(workerDone) // signal completion
 }
 
 func (w *worker) registerTaskProcessors() {
@@ -102,6 +105,10 @@ func newScheduler(redisConfig config.RedisConfig) *scheduler {
 }
 
 /*
+start attempts to acquire an exclusive lock for the scheduler.
+It blocks until the lock is acquired or an os signal to exit the program is received.
+The function returns once the lock is held or shutdown is triggered.
+
 NOTE: Asynq requires us to run only one scheduler instance at a time to prevent duplicate tasks. (https://git.new/v03JF3B)
 
 However, a single scheduler becomes a SPOF (if it crashes, no tasks will be scheduled, until the instance is up and running again).
@@ -133,8 +140,8 @@ func (s *scheduler) start(ctx context.Context, schedulerDone chan struct{}) {
 		close(shutdownSignalChannel)
 	}()
 
-	result := s.acquireExclusiveLock(ctx, shutdownSignalChannel) // block
-	if result {
+	isSchedulerLockAcquired := s.acquireExclusiveLock(ctx, shutdownSignalChannel) // blocking operation
+	if isSchedulerLockAcquired {
 		logger.Info(ctx, "Scheduler lock acquired, starting scheduler...")
 
 		// register the scheduled tasks
@@ -153,8 +160,6 @@ func (s *scheduler) start(ctx context.Context, schedulerDone chan struct{}) {
 		// to signal completion so that server can be shutdown properly without blocking indefinitely
 		close(schedulerDone)
 	}
-
-	logger.Info(ctx, "RESULT: %+v", result)
 }
 
 /*
