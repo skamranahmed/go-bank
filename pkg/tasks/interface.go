@@ -63,3 +63,25 @@ type TaskScheduler interface {
 	*/
 	RegisterTask(ctx context.Context, schedulableTask SchedulableTask) (taskEntryID string, err error)
 }
+
+type TaskWorker interface {
+	/*
+		Start begins running the worker
+
+		The call should block until an os signal to exit the program is received.
+		Once it receives the signal, it should gracefully shutdown
+		all active workers and other goroutines to process the tasks.
+	*/
+	Start(ctx context.Context, workerStopSignalChannel chan struct{})
+
+	/*
+	   Router returns the task multiplexer
+
+	   It maps task names to their processors and dispatches incoming tasks
+	   to the correct processor, similar to how an HTTP router matches
+	   routes to handlers
+
+	   Note: This depends on the concrete asynq implementation
+	*/
+	Router() *asynq.ServeMux
+}
