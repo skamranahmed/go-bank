@@ -9,9 +9,9 @@ import (
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 )
 
-func RegisterTaskProcessors(backgroundTaskHandler *asynq.ServeMux, services *internal.Services) {
-	backgroundTaskHandler.Handle(SendWelcomeEmailTaskName, NewSendWelcomeEmailTaskProcessor(services))
-	backgroundTaskHandler.Handle(SendMonthlyAccountStatementOrchestratorTaskName, NewSendMonthlyAccountStatementOrchestratorTaskProcessor(services))
+func RegisterTaskProcessors(taskRouter *asynq.ServeMux, services *internal.Services) {
+	taskRouter.Handle(SendWelcomeEmailTaskName, NewSendWelcomeEmailTaskProcessor(services))
+	taskRouter.Handle(SendMonthlyAccountStatementOrchestratorTaskName, NewSendMonthlyAccountStatementOrchestratorTaskProcessor(services))
 }
 
 func RegisterSchedulableTasks(taskScheduler tasksHelper.TaskScheduler) {

@@ -40,8 +40,8 @@ func Start(queueName string, services *internal.Services) {
 
 type worker struct {
 	*asynq.Server
-	TaskHandler *asynq.ServeMux
-	Services    *internal.Services
+	TaskRouter *asynq.ServeMux
+	Services   *internal.Services
 }
 
 func newWorker(queueName string, redisConfig config.RedisConfig, services *internal.Services) *worker {
@@ -59,8 +59,8 @@ func newWorker(queueName string, redisConfig config.RedisConfig, services *inter
 				},
 			},
 		),
-		TaskHandler: asynq.NewServeMux(),
-		Services:    services,
+		TaskRouter: asynq.NewServeMux(),
+		Services:   services,
 	}
 }
 
@@ -72,7 +72,7 @@ Once it receives a signal, it gracefully shuts down all active workers and other
 func (w *worker) start(ctx context.Context, workerDone chan struct{}) {
 	w.registerTaskProcessors()
 	logger.Info(ctx, "Worker is starting")
-	err := w.Run(w.TaskHandler)
+	err := w.Run(w.TaskRouter)
 	if err != nil {
 		logger.Fatal(ctx, "Could not run worker server: %+v", err)
 	}
@@ -81,7 +81,7 @@ func (w *worker) start(ctx context.Context, workerDone chan struct{}) {
 
 func (w *worker) registerTaskProcessors() {
 	// user tasks
-	userTasks.RegisterTaskProcessors(w.TaskHandler, w.Services)
+	userTasks.RegisterTaskProcessors(w.TaskRouter, w.Services)
 }
 
 func RegisterSchedulableTasks(taskScheduler tasksHelper.TaskScheduler) {
