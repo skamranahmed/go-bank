@@ -40,3 +40,26 @@ type TaskEnqueuer interface {
 	// After Close is called, the enqueuer should not be used
 	Close() error
 }
+
+// TaskScheduler defines the behavior of a component that can schedule tasks
+// to be enqueued at specific times or intervals
+type TaskScheduler interface {
+	/*
+		Start begins running the scheduler loop
+
+		The call should block until either:
+			- the scheduler becomes active, or
+			- an os signal to exit the program is received on schedulerStopSignalChannel
+
+		Implementations are responsible for ensuring that only one active
+		scheduler instance runs at a time. For example, the asynq task
+		scheduler uses a distributed lock (via Redlock) to enforce this.
+	*/
+	Start(ctx context.Context, schedulerStopSignalChannel chan struct{})
+
+	/*
+		RegisterTask registers a task with the scheduler
+		so it can be enqueued according to its schedule
+	*/
+	RegisterTask(ctx context.Context, schedulableTask SchedulableTask) (taskEntryID string, err error)
+}

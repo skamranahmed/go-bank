@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/internal"
@@ -75,8 +74,6 @@ func (processor *SendMonthlyAccountStatementOrchestratorTaskProcessor) ProcessTa
 	ctx = context.WithValue(ctx, "correlation_id", payload.CorrelationID)
 
 	// TODO: add actual logic later. This is just for testing and validating my poc.
-	logger.Info(ctx, "STARTED")
-	time.Sleep(20 * time.Second)
 	logger.Info(ctx, "[Dummy] SendMonthlyAccountStatementOrchestratorTask ran")
 	return nil
 }
