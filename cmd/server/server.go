@@ -69,7 +69,7 @@ func (s *apiServer) start() {
 
 func (s *apiServer) waitForSignal() {
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
 	signalValue := <-done
 	logger.Info(context.TODO(), "Received '%+v' syscall, gracefully shutting down server", signalValue.String())
