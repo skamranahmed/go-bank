@@ -34,7 +34,7 @@ func (t *asynqTaskEnqueuer) Enqueue(ctx context.Context, task Task, opts ...asyn
 	// If the same option appears in both, the caller's value takes precedence
 	taskOptions := append(defaultTaskOptions, opts...)
 
-	taskToBeEnqueued, err := newAsynqTask(ctx, task.Name(), task.Payload(), taskOptions...)
+	taskToBeEnqueued, err := NewAsynqTask(ctx, task.Name(), task.Payload(), taskOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (t *asynqTaskEnqueuer) Close() error {
 	return t.client.Close()
 }
 
-func newAsynqTask[T any](ctx context.Context, name string, data T, opts ...asynq.Option) (*asynq.Task, error) {
+func NewAsynqTask[T any](ctx context.Context, name string, data T, opts ...asynq.Option) (*asynq.Task, error) {
 	val := ctx.Value("correlation_id")
 	correlationID, ok := val.(string)
 	if !ok {

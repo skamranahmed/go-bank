@@ -27,8 +27,8 @@ type SendWelcomeEmailTask struct {
 func NewSendWelcomeEmailTask(userID string) tasksHelper.Task {
 	return &SendWelcomeEmailTask{
 		name:          SendWelcomeEmailTaskName,
-		maxRetryCount: 1,
 		queue:         tasksHelper.DefaultQueue,
+		maxRetryCount: 1,
 		payload: SendWelcomeEmailTaskPayload{
 			UserID: userID,
 		},
