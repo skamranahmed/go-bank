@@ -140,12 +140,12 @@ func (s *scheduler) start(ctx context.Context, schedulerDone chan struct{}) {
 		close(shutdownSignalChannel)
 	}()
 
+	// register the scheduled tasks
+	s.registerScheduledTasks()
+
 	isSchedulerLockAcquired := s.acquireExclusiveLock(ctx, shutdownSignalChannel) // blocking operation
 	if isSchedulerLockAcquired {
 		logger.Info(ctx, "Scheduler lock acquired, starting scheduler...")
-
-		// register the scheduled tasks
-		s.registerScheduledTasks()
 
 		go func() {
 			// run the scheduler
