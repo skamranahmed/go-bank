@@ -2,8 +2,6 @@ package tasks
 
 import (
 	"context"
-
-	"github.com/hibiken/asynq"
 )
 
 // Task represents a unit of work that can be enqueued and executed
@@ -31,10 +29,8 @@ type SchedulableTask interface {
 
 // TaskEnqueuer defines the behavior of a component that can enqueue tasks for execution
 type TaskEnqueuer interface {
-	// Enqueue adds a task to the queue.
-	// TODO: Consider defining our own task options abstraction instead of depending on asynq.Option
-	// The concrete asynq enqueuer can then convert them to asynq options internally
-	Enqueue(ctx context.Context, task Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+	// Enqueue adds a task to the queue
+	Enqueue(ctx context.Context, task Task, maxRetryCount *int, queueName *string) error
 
 	// Close releases any resources held by the enqueuer.
 	// After Close is called, the enqueuer should not be used
@@ -80,8 +76,15 @@ type TaskWorker interface {
 	   It maps task names to their processors and dispatches incoming tasks
 	   to the correct processor, similar to how an HTTP router matches
 	   routes to handlers
-
-	   Note: This depends on the concrete asynq implementation
 	*/
-	Router() *asynq.ServeMux
+	Router() TaskRouter
+}
+
+type TaskRouter interface {
+	RegisterTaskProcessor(taskName string, taskProcessor TaskProcessor)
+	Handler() any
+}
+
+type TaskProcessor interface {
+	ProcessTask(ctx context.Context, task Task) error
 }

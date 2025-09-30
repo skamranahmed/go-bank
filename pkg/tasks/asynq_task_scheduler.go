@@ -87,7 +87,11 @@ func (s *asynqTaskScheduler) Start(ctx context.Context, schedulerStopSignalChann
 }
 
 func (s *asynqTaskScheduler) RegisterTask(ctx context.Context, schedulableTask SchedulableTask) (string, error) {
-	task, err := NewAsynqTask(ctx, schedulableTask.Name(), schedulableTask.Payload())
+	taskOptions := []asynq.Option{
+		asynq.MaxRetry(schedulableTask.MaxRetryCount()),
+		asynq.Queue(schedulableTask.Queue()),
+	}
+	task, err := NewAsynqTask(ctx, schedulableTask.Name(), schedulableTask.Payload(), taskOptions...)
 	if err != nil {
 		return "", err
 	}

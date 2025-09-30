@@ -11,10 +11,16 @@ import (
 
 type asynqTaskWorker struct {
 	server     *asynq.Server
-	taskRouter *asynq.ServeMux
+	taskRouter TaskRouter
 }
 
 func NewAsynqTaskWorker(redisConfig config.RedisConfig, queueName string) TaskWorker {
+	taskRouter := NewAsynqTaskRouter()
+	_, ok := taskRouter.Handler().(*asynq.ServeMux)
+	if !ok {
+		logger.Fatal(context.TODO(), "taskRouter for asynq worker must provide an asynq.ServeMux handler")
+	}
+
 	return &asynqTaskWorker{
 		server: asynq.NewServer(
 			asynq.RedisClientOpt{
@@ -29,19 +35,24 @@ func NewAsynqTaskWorker(redisConfig config.RedisConfig, queueName string) TaskWo
 				},
 			},
 		),
-		taskRouter: asynq.NewServeMux(),
+		taskRouter: taskRouter,
 	}
 }
 
 func (w *asynqTaskWorker) Start(ctx context.Context, workerStopSignalChannel chan struct{}) {
+	handler, ok := w.taskRouter.Handler().(*asynq.ServeMux)
+	if !ok {
+		logger.Fatal(ctx, "taskRouter for asynq worker must provide an asynq.ServeMux handler")
+	}
+
 	logger.Info(ctx, "Worker is starting")
-	err := w.server.Run(w.taskRouter)
+	err := w.server.Run(handler)
 	if err != nil {
 		logger.Fatal(ctx, "Could not run worker server: %+v", err)
 	}
 	close(workerStopSignalChannel) // signals worker has been stopped
 }
 
-func (w *asynqTaskWorker) Router() *asynq.ServeMux {
+func (w *asynqTaskWorker) Router() TaskRouter {
 	return w.taskRouter
 }

@@ -3,15 +3,14 @@ package tasks
 import (
 	"context"
 
-	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/internal"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 )
 
-func RegisterTaskProcessors(taskRouter *asynq.ServeMux, services *internal.Services) {
-	taskRouter.Handle(SendWelcomeEmailTaskName, NewSendWelcomeEmailTaskProcessor(services))
-	taskRouter.Handle(SendMonthlyAccountStatementOrchestratorTaskName, NewSendMonthlyAccountStatementOrchestratorTaskProcessor(services))
+func RegisterTaskProcessors(taskRouter tasksHelper.TaskRouter, services *internal.Services) {
+	taskRouter.RegisterTaskProcessor(SendWelcomeEmailTaskName, NewSendWelcomeEmailTaskProcessor(services))
+	taskRouter.RegisterTaskProcessor(SendMonthlyAccountStatementOrchestratorTaskName, NewSendMonthlyAccountStatementOrchestratorTaskProcessor(services))
 }
 
 func RegisterSchedulableTasks(taskScheduler tasksHelper.TaskScheduler) {

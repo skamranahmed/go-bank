@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/skamranahmed/go-bank/cmd/router"
 	"github.com/skamranahmed/go-bank/config"
@@ -81,8 +81,10 @@ func NewTestApp(ctx context.Context, deps *TestAppDeps, postresTestContainer *Po
 
 	// fallback to real implementations if nil
 	if taskEnqueuer == nil {
-		taskEnqueuer = tasksHelper.NewAsynqTaskEnqueuer(asynq.RedisClientOpt{
-			Addr: fmt.Sprintf("localhost:%s", redisTestContainer.MappedPort),
+		redisPort, _ := strconv.Atoi(redisTestContainer.MappedPort)
+		taskEnqueuer = tasksHelper.NewAsynqTaskEnqueuer(tasksHelper.AsynqRedisConfig{
+			Host: "localhost",
+			Port: redisPort,
 		})
 	}
 

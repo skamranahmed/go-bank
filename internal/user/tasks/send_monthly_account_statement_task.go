@@ -2,10 +2,8 @@ package tasks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/internal"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
@@ -29,7 +27,7 @@ func NewSendMonthlyAccountStatementOrchestratorTask() tasksHelper.SchedulableTas
 		name:          SendMonthlyAccountStatementOrchestratorTaskName,
 		queue:         tasksHelper.DefaultQueue,
 		cronSpec:      "* * * * *", // run every minute for testing
-		maxRetryCount: 1,
+		maxRetryCount: 0,
 		payload:       SendMonthlyAccountStatementOrchestratorTaskPayload{},
 	}
 }
@@ -58,17 +56,17 @@ type SendMonthlyAccountStatementOrchestratorTaskProcessor struct {
 	services *internal.Services
 }
 
-func NewSendMonthlyAccountStatementOrchestratorTaskProcessor(services *internal.Services) *SendMonthlyAccountStatementOrchestratorTaskProcessor {
+func NewSendMonthlyAccountStatementOrchestratorTaskProcessor(services *internal.Services) tasksHelper.TaskProcessor {
 	return &SendMonthlyAccountStatementOrchestratorTaskProcessor{
 		services: services,
 	}
 }
 
-func (processor *SendMonthlyAccountStatementOrchestratorTaskProcessor) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	var payload tasksHelper.Payload[SendMonthlyAccountStatementOrchestratorTaskPayload]
-	err := json.Unmarshal(t.Payload(), &payload)
+func (processor *SendMonthlyAccountStatementOrchestratorTaskProcessor) ProcessTask(ctx context.Context, t tasksHelper.Task) error {
+	taskPayloadInBytes := t.Payload().([]byte)
+	payload, err := tasksHelper.ExtractPayload[SendMonthlyAccountStatementOrchestratorTaskPayload](taskPayloadInBytes)
 	if err != nil {
-		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("Unable to extract payload for task: %s, error: %v", t.Name(), err)
 	}
 
 	ctx = context.WithValue(ctx, "correlation_id", payload.CorrelationID)

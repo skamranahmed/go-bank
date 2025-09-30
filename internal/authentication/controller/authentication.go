@@ -93,11 +93,9 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	}
 
 	// send welcome email task
-	taskInfo, err := c.taskEnqueuer.Enqueue(requestCtx, userTasks.NewSendWelcomeEmailTask(userID))
+	err = c.taskEnqueuer.Enqueue(requestCtx, userTasks.NewSendWelcomeEmailTask(userID), nil, nil)
 	if err != nil {
-		logger.Error(requestCtx, "Unable to enqueue SendWelcomeEmailTask, error: %+v", err)
-	} else {
-		logger.Info(requestCtx, "Enqueued SendWelcomeEmailTask for userID: %+v, taskID: %+v, queue: %+v", userID, taskInfo.ID, taskInfo.Queue)
+		logger.Error(requestCtx, "Unable to enqueue SendWelcomeEmailTask for userID: %s, error: %+v", userID, err)
 	}
 
 	server.SendSuccessResponse(ginCtx, http.StatusCreated, dto.SignUpResponse{

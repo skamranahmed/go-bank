@@ -2,10 +2,8 @@ package tasks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/hibiken/asynq"
 	"github.com/skamranahmed/go-bank/internal"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
@@ -28,7 +26,7 @@ func NewSendWelcomeEmailTask(userID string) tasksHelper.Task {
 	return &SendWelcomeEmailTask{
 		name:          SendWelcomeEmailTaskName,
 		queue:         tasksHelper.DefaultQueue,
-		maxRetryCount: 1,
+		maxRetryCount: 0,
 		payload: SendWelcomeEmailTaskPayload{
 			UserID: userID,
 		},
@@ -55,17 +53,17 @@ type SendWelcomeEmailTaskProcessor struct {
 	services *internal.Services
 }
 
-func NewSendWelcomeEmailTaskProcessor(services *internal.Services) *SendWelcomeEmailTaskProcessor {
+func NewSendWelcomeEmailTaskProcessor(services *internal.Services) tasksHelper.TaskProcessor {
 	return &SendWelcomeEmailTaskProcessor{
 		services: services,
 	}
 }
 
-func (processor *SendWelcomeEmailTaskProcessor) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	var payload tasksHelper.Payload[SendWelcomeEmailTaskPayload]
-	err := json.Unmarshal(t.Payload(), &payload)
+func (processor *SendWelcomeEmailTaskProcessor) ProcessTask(ctx context.Context, t tasksHelper.Task) error {
+	taskPayloadInBytes := t.Payload().([]byte)
+	payload, err := tasksHelper.ExtractPayload[SendWelcomeEmailTaskPayload](taskPayloadInBytes)
 	if err != nil {
-		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("Unable to extract payload for task: %s, error: %v", t.Name(), err)
 	}
 
 	ctx = context.WithValue(ctx, "correlation_id", payload.CorrelationID)

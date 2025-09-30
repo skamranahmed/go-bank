@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/skamranahmed/go-bank/cmd/router"
 	"github.com/skamranahmed/go-bank/cmd/server"
@@ -57,10 +56,11 @@ func Run(role string) error {
 	}
 	defer cacheClient.Close()
 
-	taskEnqueuer := tasksHelper.NewAsynqTaskEnqueuer(asynq.RedisClientOpt{
-		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
+	taskEnqueuer := tasksHelper.NewAsynqTaskEnqueuer(tasksHelper.AsynqRedisConfig{
+		Host:     redisConfig.Host,
+		Port:     redisConfig.Port,
 		Password: redisConfig.Password,
-		DB:       redisConfig.DbIndex,
+		DbIndex:  redisConfig.DbIndex,
 	})
 	defer taskEnqueuer.Close()
 

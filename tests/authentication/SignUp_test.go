@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/go-testfixtures/testfixtures/v3"
-	"github.com/hibiken/asynq"
 	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	userModel "github.com/skamranahmed/go-bank/internal/user/model"
@@ -259,11 +258,11 @@ func (suite *SignUpTestSuite) TestSuccessfulSignUp() {
 		var enqueuedTask tasksHelper.Task
 		mockTaskEnqueuer := mock.NewMockTaskEnqueuer(mockController)
 		mockTaskEnqueuer.EXPECT().
-			Enqueue(gomock.Any(), gomock.Any()).
-			Do(func(ctx context.Context, task tasksHelper.Task, opts ...asynq.Option) {
+			Enqueue(gomock.Any(), gomock.Any(), nil, nil).
+			Do(func(ctx context.Context, task tasksHelper.Task, maxRetryCount *int, queueName *string) {
 				enqueuedTask = task
 			}).
-			Return(&asynq.TaskInfo{}, nil).
+			Return(nil).
 			Times(1)
 
 		appWithMock := testutils.NewTestApp(
