@@ -6,6 +6,8 @@ import (
 
 	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // RunInTransaction is a helper function to run a set of database operations within a transaction.
@@ -21,8 +23,19 @@ func RunInTransaction(
 	tracer := otel.Tracer("db-transaction")
 
 	// create a new span to group the operations performed in the transaction
-	txCtx, span := tracer.Start(ctx, txName)
+	txCtx, span := tracer.Start(ctx, txName, trace.WithAttributes(
+		attribute.String("db.transaction.name", txName), // custom label to indicate transaction name
+	))
 	defer span.End()
 
-	return db.RunInTx(txCtx, opts, queryExecFunc)
+	err := db.RunInTx(txCtx, opts, queryExecFunc)
+	if err != nil {
+		// custom label to indicate failure of transaction
+		span.SetAttributes(attribute.String("db.transaction.outcome", "failure"))
+		return err
+	}
+
+	// custom label to indicate successful completion of transaction
+	span.SetAttributes(attribute.String("db.transaction.outcome", "success"))
+	return nil
 }
