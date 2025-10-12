@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 )
@@ -13,11 +14,18 @@ type redisClient struct {
 }
 
 func NewRedisClient(opt *redis.Options) (CacheClient, error) {
+	ctx := context.TODO()
 	client := redis.NewClient(opt)
 
-	err := client.Ping(context.Background()).Err()
+	// instrument with OpenTelemetry
+	err := redisotel.InstrumentTracing(client)
 	if err != nil {
-		logger.Error(context.TODO(), "Unable to connect to redis, error: %+v", err)
+		logger.Error(ctx, "Unable to instrument redis with OTel, error: %+v", err)
+	}
+
+	err = client.Ping(ctx).Err()
+	if err != nil {
+		logger.Error(ctx, "Unable to connect to redis, error: %+v", err)
 		return nil, err
 	}
 

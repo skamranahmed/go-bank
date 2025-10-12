@@ -15,7 +15,8 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/v2 v2.2.2
 	github.com/prometheus/client_golang v1.23.2
-	github.com/redis/go-redis/v9 v9.14.0
+	github.com/redis/go-redis/extra/redisotel/v9 v9.15.1
+	github.com/redis/go-redis/v9 v9.15.1
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
@@ -104,6 +105,7 @@ require (
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.5 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
