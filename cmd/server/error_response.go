@@ -1,10 +1,13 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ApiError struct {
@@ -34,10 +37,24 @@ func sendErrorResponse(ginCtx *gin.Context, httpStatusCode int, customMessage an
 		details = customMessage
 	}
 
-	ginCtx.JSON(httpStatusCode, gin.H{
+	errObject := gin.H{
 		"error": gin.H{
 			"status_code": httpStatusCode,
 			"details":     details,
 		},
-	})
+	}
+
+	// record the error in the root span of the request
+	rootSpan := trace.SpanFromContext(ginCtx.Request.Context())
+
+	// marshal the error object to JSON for nicer formatting
+	errJSON, err := json.MarshalIndent(errObject, "", "  ")
+	if err != nil {
+		// fallback in case JSON marshaling fails
+		rootSpan.RecordError(fmt.Errorf("api response: %+v", errObject))
+	} else {
+		rootSpan.RecordError(fmt.Errorf("api response: %s", string(errJSON)))
+	}
+
+	ginCtx.JSON(httpStatusCode, errObject)
 }
