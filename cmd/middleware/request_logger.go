@@ -11,6 +11,8 @@ import (
 	"github.com/rs/xid"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	"github.com/skamranahmed/go-bank/pkg/metrics"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func RequestLoggerMiddleware() gin.HandlerFunc {
@@ -23,6 +25,11 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 		ctx := context.WithValue(ginCtx.Request.Context(), "correlation_id", correlationID)
 		ginCtx.Request = ginCtx.Request.WithContext(ctx)
 		requestCtx := ginCtx.Request.Context()
+
+		// since the logs also have the correlation_id, we are adding the
+		// correlation_id to root span of the trace for easier trace searching in APM
+		span := trace.SpanFromContext(requestCtx)
+		span.SetAttributes(attribute.String("correlation_id", correlationID))
 
 		defer func() {
 			logMessage := "Request processed"

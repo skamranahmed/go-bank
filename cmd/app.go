@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
@@ -13,6 +14,7 @@ import (
 	"github.com/skamranahmed/go-bank/pkg/database"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
+	"github.com/skamranahmed/go-bank/pkg/telemetry"
 )
 
 const (
@@ -68,6 +70,14 @@ func Run(role string) error {
 	if err != nil {
 		return err
 	}
+
+	// initialize OpenTelemetry tracer
+	ctx := context.TODO()
+	tracerProvider, err := telemetry.InitTracer()
+	if err != nil {
+		logger.Fatal(ctx, "Failed to initialize otel tracer provider: %+v", err)
+	}
+	defer tracerProvider.Shutdown(ctx)
 
 	if role == RoleServer {
 		router := router.Init(db, services)

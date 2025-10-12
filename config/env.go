@@ -15,6 +15,10 @@ const (
 	serverPort                             = "SERVER_PORT"
 	serverGracefulShutdownTimeoutInSeconds = "SERVER_GRACEFUL_SHUTDOWN_TIMEOUT_IN_SECONDS"
 
+	// telemetry
+	telemetryServiceName          = "TELEMETRY_SERVICE_NAME"
+	telemetryTracesIntakeEndpoint = "TELEMETRY_TRACES_INTAKE_ENDPOINT"
+
 	// postgres
 	postgresHost                                  = "POSTGRES_HOST"
 	postgresUsername                              = "POSTGRES_USERNAME"
@@ -66,6 +70,14 @@ func getServerGracefulShutdownTimeoutInSeconds() int {
 		return 0
 	}
 	return timeout
+}
+
+func getTelemetryServiceName() string {
+	return os.Getenv(telemetryServiceName)
+}
+
+func getTelemetryTracesIntakeEndpoint() string {
+	return os.Getenv(telemetryTracesIntakeEndpoint)
 }
 
 func getPostgresHost() string {

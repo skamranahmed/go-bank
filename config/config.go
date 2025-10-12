@@ -114,6 +114,22 @@ func GetServerConfig() ServerConfig {
 	return serverConfig
 }
 
+func GetTelemetryConfig() TelemetryConfig {
+	telemetryConfig := loadConfig().Telemetry
+
+	serviceName := getTelemetryServiceName()
+	if serviceName != "" {
+		telemetryConfig.ServiceName = serviceName
+	}
+
+	tracesIntakeEndpoint := getTelemetryTracesIntakeEndpoint()
+	if tracesIntakeEndpoint != "" {
+		telemetryConfig.TracesIntakeEndpoint = tracesIntakeEndpoint
+	}
+
+	return telemetryConfig
+}
+
 func GetPostgresConfig() PostgresConfig {
 	postgresConfig := loadConfig().Database.Postgres
 

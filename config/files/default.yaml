@@ -3,7 +3,11 @@ logger:
 
 server:
   port: 8080
-  gracefulShutdownTimeoutInSeconds: 20 
+  gracefulShutdownTimeoutInSeconds: 20
+
+telemetry:
+  serviceName: go-bank-api
+  tracesIntakeEndpoint: localhost:8200 # host:port of the APM server; protocol is automatically added by the OpenTelemetry SDK 
 
 database:
   postgres:

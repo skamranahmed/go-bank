@@ -8,12 +8,13 @@ const (
 )
 
 type Config struct {
-	Environment string         `koanf:"environment"`
-	Logger      LoggerConfig   `koanf:"logger"`
-	Server      ServerConfig   `koanf:"server"`
-	Database    DatabaseConfig `koanf:"database"`
-	Cache       CacheConfig    `koanf:"cache"`
-	Auth        AuthConfig     `koanf:"auth"`
+	Environment string          `koanf:"environment"`
+	Logger      LoggerConfig    `koanf:"logger"`
+	Server      ServerConfig    `koanf:"server"`
+	Telemetry   TelemetryConfig `koanf:"telemetry"`
+	Database    DatabaseConfig  `koanf:"database"`
+	Cache       CacheConfig     `koanf:"cache"`
+	Auth        AuthConfig      `koanf:"auth"`
 }
 
 type LoggerConfig struct {
@@ -23,6 +24,11 @@ type LoggerConfig struct {
 type ServerConfig struct {
 	Port                             int `koanf:"port"`
 	GracefulShutdownTimeoutInSeconds int `koanf:"gracefulShutdownTimeoutInSeconds"`
+}
+
+type TelemetryConfig struct {
+	ServiceName          string `koanf:"serviceName"`
+	TracesIntakeEndpoint string `koanf:"tracesIntakeEndpoint"`
 }
 
 type DatabaseConfig struct {

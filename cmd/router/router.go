@@ -10,6 +10,7 @@ import (
 	healthzController "github.com/skamranahmed/go-bank/internal/healthz/controller"
 	"github.com/skamranahmed/go-bank/pkg/metrics"
 	"github.com/uptrace/bun"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func Init(db *bun.DB, services *internal.Services) *gin.Engine {
@@ -27,6 +28,20 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
+	/*
+		OpenTelemetry middleware is important to be registered
+		before the request logger middleware because we need to
+		extract the trace from the request context in the request
+		logger middleware for attaching the correlation_id to the root span
+	*/
+	telemetryServiceName := config.GetTelemetryConfig().ServiceName
+	router.Use(otelgin.Middleware(telemetryServiceName))
+
+	/*
+		The request logger middleware is disabled in the test environment
+		because it creates a lot of logs when running tests in verbose mode
+		and hence makes it difficult to read the test output.
+	*/
 	if environment != config.APP_ENVIRONMENT_TEST {
 		router.Use(middleware.RequestLoggerMiddleware())
 	}
