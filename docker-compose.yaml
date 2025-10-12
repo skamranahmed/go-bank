@@ -93,6 +93,18 @@ services:
       timeout: 5s
       retries: 2
 
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:9.1.4-arm64
+    ports:
+      - "8200:8200"
+    environment:
+      - output.elasticsearch.hosts=["http://elasticsearch:9200"]
+      - apm-server.otlp.enabled=true   # enable OTLP receiver
+      - apm-server.otlp.http.enabled=true
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
   kibana:
     image: docker.elastic.co/kibana/kibana:9.1.4-arm64
     ports:
