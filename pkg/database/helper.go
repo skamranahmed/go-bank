@@ -30,6 +30,10 @@ func RunInTransaction(
 
 	err := db.RunInTx(txCtx, opts, queryExecFunc)
 	if err != nil {
+		// `RecordError` propagates the error to the parent spans as well, making it
+		// easier to identify which transaction failed, when viewing the traces in Kibana
+		span.RecordError(err)
+
 		// custom label to indicate failure of transaction
 		span.SetAttributes(attribute.String("db.transaction.outcome", "failure"))
 		return err
