@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +11,7 @@ import (
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	userTasks "github.com/skamranahmed/go-bank/internal/user/tasks"
+	"github.com/skamranahmed/go-bank/pkg/database"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
 	"github.com/uptrace/bun"
@@ -45,11 +45,9 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	}
 
 	var userID, accessToken string
-	err := c.db.RunInTx(requestCtx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-	}, func(ctx context.Context, tx bun.Tx) error {
+	err := database.RunInTransaction(requestCtx, "signUpTx", c.db, nil, func(txCtx context.Context, tx bun.Tx) error {
 		// create user record
-		userDto, err := c.userService.CreateUser(requestCtx, tx, payload.Data.Email, payload.Data.Password, payload.Data.Username)
+		userDto, err := c.userService.CreateUser(txCtx, tx, payload.Data.Email, payload.Data.Password, payload.Data.Username)
 		if err != nil {
 			return err
 		}
@@ -57,7 +55,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		userID = userDto.ID.String()
 
 		// create an account for user
-		err = c.accountService.CreateAccount(requestCtx, tx, userDto.ID)
+		err = c.accountService.CreateAccount(txCtx, tx, userDto.ID)
 		if err != nil {
 			return err
 		}
@@ -72,7 +70,7 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 
 			This way, we avoid leaving orphaned users without a valid access token
 		*/
-		accessToken, err = c.authenticationService.CreateAccessToken(requestCtx, userDto.ID.String())
+		accessToken, err = c.authenticationService.CreateAccessToken(txCtx, userDto.ID.String())
 		if err != nil {
 			return err
 		}
