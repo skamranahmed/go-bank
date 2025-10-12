@@ -24,6 +24,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.2.15
 	github.com/uptrace/bun/driver/pgdriver v1.2.15
 	github.com/uptrace/bun/extra/bundebug v1.2.15
+	github.com/uptrace/bun/extra/bunotel v1.2.15
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.63.0
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0
@@ -112,6 +113,7 @@ require (
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
+	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect

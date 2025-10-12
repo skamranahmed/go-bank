@@ -14,6 +14,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
+	"github.com/uptrace/bun/extra/bunotel"
 )
 
 func NewPostgresClient() (*bun.DB, error) {
@@ -61,6 +62,9 @@ func NewPostgresClient() (*bun.DB, error) {
 			bundebug.WithVerbose(true), // print full SQL with args
 		))
 	}
+
+	// enable opentelemetry tracing
+	db.AddQueryHook(bunotel.NewQueryHook(bunotel.WithDBName("postgres")))
 
 	// connection pooling
 	db.SetMaxOpenConns(postgresConfig.Options.MaxOpenConnections)
