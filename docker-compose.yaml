@@ -38,6 +38,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=password
+      - TELEMETRY_TRACES_INTAKE_ENDPOINT=apm-server:8200
     depends_on:
       cleanup-logs:
         condition: service_completed_successfully
