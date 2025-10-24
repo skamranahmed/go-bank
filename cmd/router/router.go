@@ -8,6 +8,7 @@ import (
 	"github.com/skamranahmed/go-bank/internal"
 	authenticationController "github.com/skamranahmed/go-bank/internal/authentication/controller"
 	healthzController "github.com/skamranahmed/go-bank/internal/healthz/controller"
+	userController "github.com/skamranahmed/go-bank/internal/user/controller"
 	"github.com/skamranahmed/go-bank/pkg/metrics"
 	"github.com/uptrace/bun"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -58,6 +59,11 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 		UserService:           services.UserService,
 		AccountService:        services.AccountService,
 		TaskEnqueuer:          services.TaskEnqueuer,
+	})
+
+	userController.Register(router, userController.Dependency{
+		AuthenticationService: services.AuthenticationService,
+		UserService:           services.UserService,
 	})
 
 	return router

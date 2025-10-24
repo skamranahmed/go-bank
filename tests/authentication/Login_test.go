@@ -78,7 +78,7 @@ func (suite *LoginTestSuite) TestValidationErrors() {
 
 	for _, tc := range tests {
 		suite.T().Run(tc.name, func(t *testing.T) {
-			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/login", http.MethodPost, tc.payload)
+			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/login", http.MethodPost, tc.payload, nil)
 			assert.Equal(t, tc.expectedStatusCode, responseRecorder.Code)
 
 			response := testutils.DecodeErrorResponse(t, responseRecorder)
@@ -120,7 +120,7 @@ func (suite *LoginTestSuite) TestAuthenticationErrors() {
 
 	for _, tc := range tests {
 		suite.T().Run(tc.name, func(t *testing.T) {
-			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/login", http.MethodPost, tc.payload)
+			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/login", http.MethodPost, tc.payload, nil)
 			assert.Equal(t, tc.expectedStatusCode, responseRecorder.Code)
 
 			response := testutils.DecodeErrorResponse(t, responseRecorder)
@@ -144,7 +144,7 @@ func (suite *LoginTestSuite) TestSuccessfulLogin() {
 			},
 		}
 
-		responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/login", http.MethodPost, payload)
+		responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/login", http.MethodPost, payload, nil)
 		assert.Equal(t, http.StatusOK, responseRecorder.Code)
 
 		var response SuccessResponse

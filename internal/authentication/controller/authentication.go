@@ -120,7 +120,7 @@ func (c *authenticationController) Login(ginCtx *gin.Context) {
 	if err != nil {
 		// if user not found, return a generic authentication error for security
 		// we should not reveal whether the username or password was incorrect
-		if strings.Contains(err.Error(), "no rows") {
+		if strings.Contains(err.Error(), "no rows in result set") {
 			server.SendErrorResponse(ginCtx, &server.ApiError{
 				HttpStatusCode: http.StatusUnauthorized,
 				Message:        "Invalid username or password.",

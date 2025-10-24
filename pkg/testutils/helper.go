@@ -28,7 +28,7 @@ func DecodeErrorResponse(t *testing.T, w *httptest.ResponseRecorder) ErrorRespon
 	return response
 }
 
-func MakeRequest(t *testing.T, app TestApp, endpoint string, httpMethod string, requestPayload any) *httptest.ResponseRecorder {
+func MakeRequest(t *testing.T, app TestApp, endpoint string, httpMethod string, requestPayload any, headers map[string]string) *httptest.ResponseRecorder {
 	t.Helper()
 
 	var requestBody *bytes.Buffer
@@ -38,10 +38,18 @@ func MakeRequest(t *testing.T, app TestApp, endpoint string, httpMethod string, 
 			t.Fatalf("failed to marshal body: %v", err)
 		}
 		requestBody = bytes.NewBuffer(body)
+	} else {
+		requestBody = bytes.NewBuffer(nil)
 	}
 
 	req, err := http.NewRequest(httpMethod, endpoint, requestBody)
 	assert.Equal(t, nil, err)
+
+	// add customheaders
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
 	w := httptest.NewRecorder()
 	app.Router.ServeHTTP(w, req)
 

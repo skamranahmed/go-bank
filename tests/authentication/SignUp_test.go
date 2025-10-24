@@ -186,7 +186,7 @@ func (suite *SignUpTestSuite) TestValidationErrors() {
 
 	for _, tc := range tests {
 		suite.T().Run(tc.name, func(t *testing.T) {
-			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/sign-up", http.MethodPost, tc.payload)
+			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/sign-up", http.MethodPost, tc.payload, nil)
 			assert.Equal(t, tc.expectedStatusCode, responseRecorder.Code)
 
 			response := testutils.DecodeErrorResponse(t, responseRecorder)
@@ -236,7 +236,7 @@ func (suite *SignUpTestSuite) TestConflictErrors() {
 
 	for _, tc := range tests {
 		suite.T().Run(tc.name, func(t *testing.T) {
-			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/sign-up", http.MethodPost, tc.payload)
+			responseRecorder := testutils.MakeRequest(t, suite.app, "/v1/sign-up", http.MethodPost, tc.payload, nil)
 			assert.Equal(t, tc.expectedStatusCode, responseRecorder.Code)
 
 			response := testutils.DecodeErrorResponse(t, responseRecorder)
@@ -285,7 +285,7 @@ func (suite *SignUpTestSuite) TestSuccessfulSignUp() {
 			},
 		}
 
-		responseRecorder := testutils.MakeRequest(t, appWithMock, "/v1/sign-up", http.MethodPost, payload)
+		responseRecorder := testutils.MakeRequest(t, appWithMock, "/v1/sign-up", http.MethodPost, payload, nil)
 		assert.Equal(t, http.StatusCreated, responseRecorder.Code)
 
 		var response SuccessResponse
