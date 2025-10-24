@@ -20,4 +20,5 @@ type Dependency struct {
 func Register(router *gin.Engine, dependency Dependency) {
 	authenticationController := newAuthenticationController(dependency)
 	router.POST("/v1/sign-up", authenticationController.SignUp)
+	router.POST("/v1/login", authenticationController.Login)
 }

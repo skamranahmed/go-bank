@@ -6,9 +6,9 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/skamranahmed/go-bank/cmd/server"
-	"github.com/skamranahmed/go-bank/internal/user/dto"
 	"github.com/skamranahmed/go-bank/internal/user/model"
 	"github.com/skamranahmed/go-bank/internal/user/repository"
+	"github.com/skamranahmed/go-bank/internal/user/types"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	"github.com/uptrace/bun"
 )
@@ -25,7 +25,7 @@ func NewUserService(db *bun.DB, userRepository repository.UserRepository) UserSe
 	}
 }
 
-func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB, email string, password string, username string) (*dto.CreateUserDto, error) {
+func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB, email string, password string, username string) (*types.CreateUserDto, error) {
 	if dbExecutor == nil {
 		dbExecutor = u.db
 	}
@@ -50,5 +50,9 @@ func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB,
 		return nil, err
 	}
 
-	return dto.TransformToCreateUserDto(user), nil
+	return types.TransformToCreateUserDto(user), nil
+}
+
+func (u *userService) GetUser(requestCtx context.Context, dbExecutor bun.IDB, options types.UserQueryOptions) (*model.User, error) {
+	return u.userRepository.GetUser(requestCtx, dbExecutor, options)
 }

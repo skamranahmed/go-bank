@@ -3,7 +3,9 @@ package controller
 import (
 	"context"
 	"net/http"
+	"strings"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/gin-gonic/gin"
 	"github.com/skamranahmed/go-bank/cmd/server"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
@@ -11,6 +13,7 @@ import (
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
 	userTasks "github.com/skamranahmed/go-bank/internal/user/tasks"
+	"github.com/skamranahmed/go-bank/internal/user/types"
 	"github.com/skamranahmed/go-bank/pkg/database"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	tasksHelper "github.com/skamranahmed/go-bank/pkg/tasks"
@@ -97,6 +100,62 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 	}
 
 	server.SendSuccessResponse(ginCtx, http.StatusCreated, dto.SignUpResponse{
+		AccessToken: accessToken,
+	})
+}
+
+func (c *authenticationController) Login(ginCtx *gin.Context) {
+	requestCtx := ginCtx.Request.Context()
+
+	var payload dto.LoginRequest
+	isSuccess := server.BindAndValidateIncomingRequestBody(ginCtx, &payload)
+	if !isSuccess {
+		return
+	}
+
+	userQueryOptions := types.UserQueryOptions{
+		Username: &payload.Data.Username,
+	}
+	user, err := c.userService.GetUser(requestCtx, nil, userQueryOptions)
+	if err != nil {
+		// if user not found, return a generic authentication error for security
+		// we should not reveal whether the username or password was incorrect
+		if strings.Contains(err.Error(), "no rows") {
+			server.SendErrorResponse(ginCtx, &server.ApiError{
+				HttpStatusCode: http.StatusUnauthorized,
+				Message:        "Invalid username or password.",
+			})
+			return
+		}
+		server.SendErrorResponse(ginCtx, err)
+		return
+	}
+
+	doesPasswordMatch, err := argon2id.ComparePasswordAndHash(payload.Data.Password, user.Password)
+	if err != nil {
+		logger.Error(requestCtx, "Error comparing password hash, error: %+v", err)
+		server.SendErrorResponse(ginCtx, &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "Unable to process your request. Please try again later.",
+		})
+		return
+	}
+
+	if !doesPasswordMatch {
+		server.SendErrorResponse(ginCtx, &server.ApiError{
+			HttpStatusCode: http.StatusUnauthorized,
+			Message:        "Invalid username or password.",
+		})
+		return
+	}
+
+	accessToken, err := c.authenticationService.CreateAccessToken(requestCtx, user.ID.String())
+	if err != nil {
+		server.SendErrorResponse(ginCtx, err)
+		return
+	}
+
+	server.SendSuccessResponse(ginCtx, http.StatusOK, dto.LoginResponse{
 		AccessToken: accessToken,
 	})
 }

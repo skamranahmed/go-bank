@@ -13,3 +13,16 @@ type SignUpData struct {
 type SignUpResponse struct {
 	AccessToken string `json:"access_token"`
 }
+
+type LoginRequest struct {
+	Data LoginData `json:"data" binding:"required"`
+}
+
+type LoginData struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginResponse struct {
+	AccessToken string `json:"access_token"`
+}
