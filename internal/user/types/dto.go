@@ -46,3 +46,33 @@ func TransformToGetMeDto(user *model.User) *GetMeDto {
 		Username:  user.Username,
 	}
 }
+
+type UpdateUserRequest struct {
+	Data UpdateUserData `json:"data" binding:"required"`
+}
+
+type UpdateUserData struct {
+	Username string `json:"username" binding:"required,min=1"`
+}
+
+type UpdateUserDto struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+	Username  string    `json:"username"`
+}
+
+type UpdateUserResponse struct {
+	Data UpdateUserDto `json:"data"`
+}
+
+func TransformToUpdateUserDto(user *model.User) *UpdateUserDto {
+	return &UpdateUserDto{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+		Username:  user.Username,
+	}
+}

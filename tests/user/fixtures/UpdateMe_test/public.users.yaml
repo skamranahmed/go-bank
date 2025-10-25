@@ -1,0 +1,16 @@
+---
+# User that will be updated in tests
+- id: b2c3d4e5-f6a7-4b5c-8d9e-0f1a2b3c4d5e
+  created_at: '2025-10-13 10:00:00.000000+00'
+  updated_at: '2025-10-13 10:00:00.000000+00'
+  email: updateuser@example.com
+  username: update_user_123
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+# Another user with an existing username (for duplicate username test)
+- id: c3d4e5f6-a7b8-4c5d-8e9f-0a1b2c3d4e5f
+  created_at: '2025-10-13 11:00:00.000000+00'
+  updated_at: '2025-10-13 11:00:00.000000+00'
+  email: existinguser@example.com
+  username: existing_user
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"

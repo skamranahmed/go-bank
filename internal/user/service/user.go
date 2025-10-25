@@ -56,3 +56,25 @@ func (u *userService) CreateUser(requestCtx context.Context, dbExecutor bun.IDB,
 func (u *userService) GetUser(requestCtx context.Context, dbExecutor bun.IDB, options types.UserQueryOptions) (*model.User, error) {
 	return u.userRepository.GetUser(requestCtx, dbExecutor, options)
 }
+
+func (s *userService) UpdateUser(requestCtx context.Context, dbExecutor bun.IDB, userID string, options types.UserUpdateOptions) (*model.User, error) {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	// verify user exists
+	_, err := s.userRepository.GetUser(requestCtx, dbExecutor, types.UserQueryOptions{
+		ID: &userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// update user
+	updatedUser, err := s.userRepository.UpdateUser(requestCtx, dbExecutor, userID, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedUser, nil
+}

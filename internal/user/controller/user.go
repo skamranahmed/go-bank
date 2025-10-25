@@ -48,3 +48,48 @@ func (c *userController) GetMe(ginCtx *gin.Context) {
 		Data: *userDto,
 	})
 }
+
+func (c *userController) UpdateUser(ginCtx *gin.Context) {
+	requestCtx := ginCtx.Request.Context()
+
+	// extract user ID from the request context
+	userID, ok := requestCtx.Value(middleware.ContextUserIDKey).(string)
+	if !ok || userID == "" {
+		server.SendErrorResponse(ginCtx, &server.ApiError{
+			HttpStatusCode: http.StatusUnauthorized,
+			Message:        "User not authenticated",
+		})
+		return
+	}
+
+	/*
+		Note: Currently, username is marked as required in UpdateUserRequest validation
+		because it's the only field supported for updates
+
+		In the future, when additional fields are added for updates,,
+		the validation should be updated to make all fields optional, and the logic below
+		should be modified to dynamically populate UserUpdateOptions only with fields
+		that are present in the request (allowing partial updates as expected in PATCH endpoints)
+	*/
+	var req types.UpdateUserRequest
+	isSuccess := server.BindAndValidateIncomingRequestBody(ginCtx, &req)
+	if !isSuccess {
+		return
+	}
+
+	updateOptions := types.UserUpdateOptions{
+		Username: &req.Data.Username,
+	}
+
+	updatedUser, err := c.userService.UpdateUser(requestCtx, nil, userID, updateOptions)
+	if err != nil {
+		server.SendErrorResponse(ginCtx, err)
+		return
+	}
+
+	// transform to DTO and return response
+	userDto := types.TransformToUpdateUserDto(updatedUser)
+	server.SendSuccessResponse(ginCtx, http.StatusOK, types.UpdateUserResponse{
+		Data: *userDto,
+	})
+}

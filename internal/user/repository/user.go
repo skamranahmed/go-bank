@@ -101,3 +101,48 @@ func (r *userRepository) GetUser(requestCtx context.Context, dbExecutor bun.IDB,
 
 	return &user, nil
 }
+
+func (r *userRepository) UpdateUser(requestCtx context.Context, dbExecutor bun.IDB, userID string, options types.UserUpdateOptions) (*model.User, error) {
+	if dbExecutor == nil {
+		dbExecutor = r.db
+	}
+
+	var user model.User
+	query := dbExecutor.NewUpdate().Model(&user)
+
+	// dynamically construct the update query based on which fields are set
+	if options.Username != nil {
+		query = query.Set("username = ?", *options.Username)
+	}
+
+	// always update the updated_at timestamp
+	query = query.Set("updated_at = NOW()").
+		Where("id = ?", userID).
+		Returning("*")
+
+	_, err := query.Exec(requestCtx)
+	if err != nil {
+		logger.Error(requestCtx, "Error while updating user with ID: %s, options: %+v, error: %+v", userID, options, err)
+		if strings.Contains(err.Error(), "unique constraint") {
+			return nil, &server.ApiError{
+				HttpStatusCode: http.StatusConflict,
+				Message:        "This username is already in use. Please choose another.",
+			}
+		}
+		return nil, &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "Unable to update user at this time. Please try again later.",
+		}
+	}
+
+	safeUser := &model.User{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		// Password omitted
+	}
+
+	return safeUser, nil
+}

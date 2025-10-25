@@ -6,3 +6,7 @@ type UserQueryOptions struct {
 	ID       *string
 	Columns  []string
 }
+
+type UserUpdateOptions struct {
+	Username *string
+}
