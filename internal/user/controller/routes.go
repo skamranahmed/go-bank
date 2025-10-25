@@ -16,4 +16,5 @@ func Register(router *gin.Engine, dependency Dependency) {
 	userController := newUserController(dependency)
 	router.GET("/v1/me", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), userController.GetMe)
 	router.PATCH("/v1/me", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), userController.UpdateUser)
+	router.PUT("/v1/me/password", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), userController.UpdatePassword)
 }

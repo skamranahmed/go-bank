@@ -93,3 +93,33 @@ func (c *userController) UpdateUser(ginCtx *gin.Context) {
 		Data: *userDto,
 	})
 }
+
+func (c *userController) UpdatePassword(ginCtx *gin.Context) {
+	requestCtx := ginCtx.Request.Context()
+
+	// extract user ID from the request context
+	userID, ok := requestCtx.Value(middleware.ContextUserIDKey).(string)
+	if !ok || userID == "" {
+		server.SendErrorResponse(ginCtx, &server.ApiError{
+			HttpStatusCode: http.StatusUnauthorized,
+			Message:        "User not authenticated",
+		})
+		return
+	}
+
+	var req types.UpdatePasswordRequest
+	isSuccess := server.BindAndValidateIncomingRequestBody(ginCtx, &req)
+	if !isSuccess {
+		return
+	}
+
+	err := c.userService.UpdatePassword(requestCtx, nil, userID, req.Data.CurrentPassword, req.Data.NewPassword)
+	if err != nil {
+		server.SendErrorResponse(ginCtx, err)
+		return
+	}
+
+	server.SendSuccessResponse(ginCtx, http.StatusOK, types.UpdatePasswordResponse{
+		Success: true,
+	})
+}

@@ -78,3 +78,55 @@ func (s *userService) UpdateUser(requestCtx context.Context, dbExecutor bun.IDB,
 
 	return updatedUser, nil
 }
+
+func (s *userService) UpdatePassword(requestCtx context.Context, dbExecutor bun.IDB, userID string, currentPassword string, newPassword string) error {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	// get user with password field
+	user, err := s.userRepository.GetUser(requestCtx, dbExecutor, types.UserQueryOptions{
+		ID:      &userID,
+		Columns: []string{"id", "password"},
+	})
+	if err != nil {
+		return err
+	}
+
+	// verify current password
+	doesPasswordMatch, err := argon2id.ComparePasswordAndHash(currentPassword, user.Password)
+	if err != nil {
+		logger.Error(requestCtx, "Error comparing password and hash, error: %v", err)
+		return &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "Unable to process your request. Please try again later.",
+		}
+	}
+
+	if !doesPasswordMatch {
+		return &server.ApiError{
+			HttpStatusCode: http.StatusUnauthorized,
+			Message:        "Current password is incorrect",
+		}
+	}
+
+	// hash new password
+	hashedPassword, err := argon2id.CreateHash(newPassword, argon2id.DefaultParams)
+	if err != nil {
+		logger.Error(requestCtx, "Error hashing the new password, error: %v", err)
+		return &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "Unable to process your request. Please try again later.",
+		}
+	}
+
+	updateOptions := types.UserUpdateOptions{
+		HashedPassword: &hashedPassword,
+	}
+	_, err = s.userRepository.UpdateUser(requestCtx, dbExecutor, userID, updateOptions)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

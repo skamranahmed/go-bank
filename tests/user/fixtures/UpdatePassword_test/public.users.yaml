@@ -1,0 +1,16 @@
+---
+# User with password "password"
+- id: d4e5f6a7-b8c9-4d5e-8f9a-0b1c2d3e4f5a
+  created_at: '2025-10-13 10:00:00.000000+00'
+  updated_at: '2025-10-13 10:00:00.000000+00'
+  email: passworduser@example.com
+  username: password_test_user
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+# Second user with password "password"
+- id: e5f6a7b8-c9d0-4e5f-9a0b-1c2d3e4f5a6b
+  created_at: '2025-10-13 10:00:00.000000+00'
+  updated_at: '2025-10-13 10:00:00.000000+00'
+  email: passworduser2@example.com
+  username: password_test_user_2
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"

@@ -76,3 +76,16 @@ func TransformToUpdateUserDto(user *model.User) *UpdateUserDto {
 		Username:  user.Username,
 	}
 }
+
+type UpdatePasswordRequest struct {
+	Data UpdatePasswordData `json:"data" binding:"required"`
+}
+
+type UpdatePasswordData struct {
+	CurrentPassword string `json:"current_password" binding:"required,min=8"`
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
+}
+
+type UpdatePasswordResponse struct {
+	Success bool `json:"success"`
+}

@@ -8,5 +8,6 @@ type UserQueryOptions struct {
 }
 
 type UserUpdateOptions struct {
-	Username *string
+	Username       *string
+	HashedPassword *string
 }

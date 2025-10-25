@@ -115,6 +115,10 @@ func (r *userRepository) UpdateUser(requestCtx context.Context, dbExecutor bun.I
 		query = query.Set("username = ?", *options.Username)
 	}
 
+	if options.HashedPassword != nil {
+		query = query.Set("password = ?", *options.HashedPassword)
+	}
+
 	// always update the updated_at timestamp
 	query = query.Set("updated_at = NOW()").
 		Where("id = ?", userID).
