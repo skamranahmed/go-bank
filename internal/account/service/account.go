@@ -45,6 +45,14 @@ func (s *accountService) GetAccountsByUserID(requestCtx context.Context, dbExecu
 	return s.accountRepository.GetAccountsByUserID(requestCtx, dbExecutor, userID)
 }
 
+func (s *accountService) GetAccountByID(requestCtx context.Context, dbExecutor bun.IDB, accountID int64) (*model.Account, error) {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	return s.accountRepository.GetAccountByID(requestCtx, dbExecutor, accountID)
+}
+
 func (s *accountService) generateAccountID() int64 {
 	min := int64(1000000000)      // 10 digits
 	max := int64(999999999999999) // 15 digits

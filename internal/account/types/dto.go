@@ -19,6 +19,10 @@ type GetAccountsResponse struct {
 	Data []AccountDto `json:"data"`
 }
 
+type GetAccountByIDResponse struct {
+	Data AccountDto `json:"data"`
+}
+
 func TransformToAccountDto(account *model.Account) *AccountDto {
 	return &AccountDto{
 		ID:        account.ID,

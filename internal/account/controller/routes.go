@@ -15,4 +15,5 @@ type Dependency struct {
 func Register(router *gin.Engine, dependency Dependency) {
 	accountController := newAccountController(dependency)
 	router.GET("/v1/accounts", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), accountController.GetAccounts)
+	router.GET("/v1/accounts/:account_id", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), accountController.GetAccountByID)
 }

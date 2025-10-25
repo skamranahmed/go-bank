@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -60,4 +62,32 @@ func (r *accountRepository) GetAccountsByUserID(requestCtx context.Context, dbEx
 	}
 
 	return accounts, nil
+}
+
+func (r *accountRepository) GetAccountByID(requestCtx context.Context, dbExecutor bun.IDB, accountID int64) (*model.Account, error) {
+	if dbExecutor == nil {
+		dbExecutor = r.db
+	}
+
+	var account model.Account
+	err := dbExecutor.NewSelect().
+		Model(&account).
+		Where("id = ?", accountID).
+		Scan(requestCtx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &server.ApiError{
+				HttpStatusCode: http.StatusNotFound,
+				Message:        "Account not found",
+			}
+		}
+
+		logger.Error(requestCtx, "Error while fetching account for accountID: %+v, error: %+v", accountID, err)
+		return nil, &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "We couldn't fetch your account at the moment. Please try again later.",
+		}
+	}
+
+	return &account, nil
 }

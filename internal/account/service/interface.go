@@ -11,4 +11,5 @@ import (
 type AccountService interface {
 	CreateAccount(requestCtx context.Context, dbExecutor bun.IDB, userID uuid.UUID, accountType model.AccountType) error
 	GetAccountsByUserID(requestCtx context.Context, dbExecutor bun.IDB, userID uuid.UUID) ([]model.Account, error)
+	GetAccountByID(requestCtx context.Context, dbExecutor bun.IDB, accountID int64) (*model.Account, error)
 }
