@@ -6,6 +6,7 @@ import (
 	"github.com/skamranahmed/go-bank/cmd/middleware"
 	"github.com/skamranahmed/go-bank/config"
 	"github.com/skamranahmed/go-bank/internal"
+	accountController "github.com/skamranahmed/go-bank/internal/account/controller"
 	authenticationController "github.com/skamranahmed/go-bank/internal/authentication/controller"
 	healthzController "github.com/skamranahmed/go-bank/internal/healthz/controller"
 	userController "github.com/skamranahmed/go-bank/internal/user/controller"
@@ -64,6 +65,11 @@ func Init(db *bun.DB, services *internal.Services) *gin.Engine {
 	userController.Register(router, userController.Dependency{
 		AuthenticationService: services.AuthenticationService,
 		UserService:           services.UserService,
+	})
+
+	accountController.Register(router, accountController.Dependency{
+		AuthenticationService: services.AuthenticationService,
+		AccountService:        services.AccountService,
 	})
 
 	return router
