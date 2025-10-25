@@ -18,14 +18,14 @@ type Account struct {
 	UpdatedAt time.Time `bun:"updated_at,notnull,default:current_timestamp"`
 
 	// foreign key to "users" table
-	UserID uuid.UUID   `bun:"user_id,notnull,type:uuid"`
+	UserID uuid.UUID   `bun:"user_id,notnull,type:uuid,unique:accounts_user_id_type_unique"`
 	User   *model.User `bun:"rel:belongs-to,join:user_id=id"`
 
 	// Balance is stored in the smallest currency unit (paise for INR)
 	Balance int64 `bun:"balance,notnull,default:0"`
 
 	// Type of bank account: SAVINGS_ACCOUNT, CURRENT_ACCOUNT
-	Type AccountType `bun:"type,notnull,default:'SAVINGS_ACCOUNT'"`
+	Type AccountType `bun:"type,notnull,unique:accounts_user_id_type_unique,default:'SAVINGS_ACCOUNT'"`
 }
 
 type AccountType string
