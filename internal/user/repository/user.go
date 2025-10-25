@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -83,8 +85,11 @@ func (r *userRepository) GetUser(requestCtx context.Context, dbExecutor bun.IDB,
 
 	err := query.Scan(requestCtx)
 	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set") {
-			return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &server.ApiError{
+				HttpStatusCode: http.StatusNotFound,
+				Message:        "User not found",
+			}
 		}
 
 		logger.Error(requestCtx, "Error while finding user with options: %+v, error: %+v", options, err)

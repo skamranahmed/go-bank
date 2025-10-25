@@ -2,8 +2,8 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/gin-gonic/gin"
@@ -118,12 +118,13 @@ func (c *authenticationController) Login(ginCtx *gin.Context) {
 	}
 	user, err := c.userService.GetUser(requestCtx, nil, userQueryOptions)
 	if err != nil {
-		// if user not found, return a generic authentication error for security
-		// we should not reveal whether the username or password was incorrect
-		if strings.Contains(err.Error(), "no rows in result set") {
+		var apiError *server.ApiError
+		if errors.As(err, &apiError) && apiError.HttpStatusCode == http.StatusNotFound {
+			// if user not found, return a generic authentication error for better security
+			// we should not reveal whether the user doesn't exist or the password was incorrect
 			server.SendErrorResponse(ginCtx, &server.ApiError{
 				HttpStatusCode: http.StatusUnauthorized,
-				Message:        "Invalid username or password.",
+				Message:        "Invalid username or password",
 			})
 			return
 		}
@@ -144,7 +145,7 @@ func (c *authenticationController) Login(ginCtx *gin.Context) {
 	if !doesPasswordMatch {
 		server.SendErrorResponse(ginCtx, &server.ApiError{
 			HttpStatusCode: http.StatusUnauthorized,
-			Message:        "Invalid username or password.",
+			Message:        "Invalid username or password",
 		})
 		return
 	}

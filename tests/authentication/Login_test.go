@@ -102,7 +102,7 @@ func (suite *LoginTestSuite) TestAuthenticationErrors() {
 					Password: "password",
 				},
 			},
-			errMessage:         "Invalid username or password.",
+			errMessage:         "Invalid username or password",
 			expectedStatusCode: http.StatusUnauthorized,
 		},
 		{
@@ -113,7 +113,7 @@ func (suite *LoginTestSuite) TestAuthenticationErrors() {
 					Password: "wrongpassword",
 				},
 			},
-			errMessage:         "Invalid username or password.",
+			errMessage:         "Invalid username or password",
 			expectedStatusCode: http.StatusUnauthorized,
 		},
 	}
