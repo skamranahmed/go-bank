@@ -332,6 +332,7 @@ func (suite *SignUpTestSuite) TestSuccessfulSignUp() {
 		assert.NotZero(t, account.CreatedAt)
 		assert.NotZero(t, account.UpdatedAt)
 		assert.Equal(t, int64(0), account.Balance)
+		assert.Equal(t, accountModel.SavingsAccount, account.Type)
 
 		// verify the access token that is returned in response and check its existence in cache
 		tokenData, err := appWithMock.Services.AuthenticationService.VerifyAccessToken(t.Context(), response.AccessToken)

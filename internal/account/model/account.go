@@ -23,4 +23,14 @@ type Account struct {
 
 	// Balance is stored in the smallest currency unit (paise for INR)
 	Balance int64 `bun:"balance,notnull,default:0"`
+
+	// Type of bank account: SAVINGS_ACCOUNT, CURRENT_ACCOUNT
+	Type AccountType `bun:"type,notnull,default:'SAVINGS_ACCOUNT'"`
 }
+
+type AccountType string
+
+const (
+	SavingsAccount AccountType = "SAVINGS_ACCOUNT"
+	CurrentAccount AccountType = "CURRENT_ACCOUNT"
+)

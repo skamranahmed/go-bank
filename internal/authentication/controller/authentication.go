@@ -8,6 +8,7 @@ import (
 	"github.com/alexedwards/argon2id"
 	"github.com/gin-gonic/gin"
 	"github.com/skamranahmed/go-bank/cmd/server"
+	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	"github.com/skamranahmed/go-bank/internal/authentication/dto"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
@@ -58,7 +59,9 @@ func (c *authenticationController) SignUp(ginCtx *gin.Context) {
 		userID = userDto.ID.String()
 
 		// create an account for user
-		err = c.accountService.CreateAccount(txCtx, tx, userDto.ID)
+		// currently the API doesn't provide the option to the user to choose the account type during user registration
+		// default account type is SAVINGS_ACCOUNT
+		err = c.accountService.CreateAccount(txCtx, tx, userDto.ID, accountModel.SavingsAccount)
 		if err != nil {
 			return err
 		}

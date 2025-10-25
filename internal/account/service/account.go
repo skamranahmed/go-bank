@@ -23,7 +23,7 @@ func NewAccountService(db *bun.DB, accountRepository repository.AccountRepositor
 	}
 }
 
-func (s *accountService) CreateAccount(requestCtx context.Context, dbExecutor bun.IDB, userID uuid.UUID) error {
+func (s *accountService) CreateAccount(requestCtx context.Context, dbExecutor bun.IDB, userID uuid.UUID, accountType model.AccountType) error {
 	if dbExecutor == nil {
 		dbExecutor = s.db
 	}
@@ -31,6 +31,7 @@ func (s *accountService) CreateAccount(requestCtx context.Context, dbExecutor bu
 	account := &model.Account{
 		ID:     s.generateAccountID(),
 		UserID: userID,
+		Type:   accountType,
 	}
 
 	return s.accountRepository.CreateAccount(requestCtx, dbExecutor, account)
