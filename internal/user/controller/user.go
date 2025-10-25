@@ -2,7 +2,6 @@ package controller
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skamranahmed/go-bank/cmd/middleware"
@@ -39,13 +38,6 @@ func (c *userController) GetMe(ginCtx *gin.Context) {
 	}
 	user, err := c.userService.GetUser(requestCtx, nil, userQueryOptions)
 	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set") {
-			server.SendErrorResponse(ginCtx, &server.ApiError{
-				HttpStatusCode: http.StatusNotFound,
-				Message:        "User not found",
-			})
-			return
-		}
 		server.SendErrorResponse(ginCtx, err)
 		return
 	}
