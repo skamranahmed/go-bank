@@ -54,6 +54,22 @@ func (s *accountService) GetAccount(requestCtx context.Context, dbExecutor bun.I
 	return s.accountRepository.GetAccount(requestCtx, dbExecutor, options)
 }
 
+func (s *accountService) UpdateAccount(requestCtx context.Context, dbExecutor bun.IDB, accountID int64, options types.AccountUpdateOptions) (*model.Account, error) {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	return s.accountRepository.UpdateAccount(requestCtx, dbExecutor, accountID, options)
+}
+
+func (s *accountService) CreateTransactionRecord(requestCtx context.Context, dbExecutor bun.IDB, transaction *model.Transaction) (*model.Transaction, error) {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	return s.accountRepository.CreateTransactionRecord(requestCtx, dbExecutor, transaction)
+}
+
 func (s *accountService) generateAccountID() int64 {
 	min := int64(1000000000)      // 10 digits
 	max := int64(999999999999999) // 15 digits

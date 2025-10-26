@@ -106,3 +106,53 @@ func (r *accountRepository) GetAccount(requestCtx context.Context, dbExecutor bu
 
 	return &account, nil
 }
+
+func (r *accountRepository) UpdateAccount(requestCtx context.Context, dbExecutor bun.IDB, accountID int64, options types.AccountUpdateOptions) (*model.Account, error) {
+	if dbExecutor == nil {
+		dbExecutor = r.db
+	}
+
+	var account model.Account
+	query := dbExecutor.NewUpdate().Model(&account)
+
+	// dynamically construct the update query based on which fields are set
+	if options.NewBalance != nil {
+		query = query.Set("balance = ?", *options.NewBalance)
+	}
+
+	// always update the updated_at timestamp
+	query = query.Set("updated_at = NOW()").
+		Where("id = ?", accountID).
+		Returning("*")
+
+	_, err := query.Exec(requestCtx)
+	if err != nil {
+		logger.Error(requestCtx, "Error while updating account with ID: %s, options: %+v, error: %+v", accountID, options, err)
+		return nil, &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "Unable to update account at this time. Please try again later.",
+		}
+	}
+
+	return &account, nil
+}
+
+func (r *accountRepository) CreateTransactionRecord(requestCtx context.Context, dbExecutor bun.IDB, transaction *model.Transaction) (*model.Transaction, error) {
+	if dbExecutor == nil {
+		dbExecutor = r.db
+	}
+
+	err := dbExecutor.NewInsert().
+		Model(transaction).
+		Returning("*").
+		Scan(requestCtx)
+	if err != nil {
+		logger.Error(requestCtx, "Error while creating transaction record for accountID: %+v, error: %+v", transaction.AccountID, err)
+		return nil, &server.ApiError{
+			HttpStatusCode: http.StatusInternalServerError,
+			Message:        "We couldn't process your transaction at the moment. Please try again later.",
+		}
+	}
+
+	return transaction, nil
+}

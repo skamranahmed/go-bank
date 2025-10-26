@@ -41,3 +41,23 @@ func TransformToAccountDtoList(accounts []model.Account) []AccountDto {
 	}
 	return accountDtos
 }
+
+type TransactionDto struct {
+	ID           string    `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	AccountID    int64     `json:"account_id"`
+	Amount       int64     `json:"amount"`
+	Type         string    `json:"type"`
+	BalanceAfter int64     `json:"balance_after"`
+}
+
+func TransformToTransactionDto(transaction *model.Transaction) *TransactionDto {
+	return &TransactionDto{
+		ID:           transaction.ID.String(),
+		CreatedAt:    transaction.CreatedAt,
+		AccountID:    transaction.AccountID,
+		Amount:       transaction.Amount,
+		Type:         string(transaction.Type),
+		BalanceAfter: transaction.BalanceAfter,
+	}
+}
