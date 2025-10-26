@@ -129,7 +129,7 @@ func (suite *GetAccountByIDTestSuite) TestAccountNotFound() {
 		assert.Equal(t, http.StatusNotFound, responseRecorder.Code)
 
 		response := testutils.DecodeErrorResponse(t, responseRecorder)
-		testutils.AssertFieldError(t, response, "message", "Account not found")
+		testutils.AssertFieldError(t, response, "message", "Account with ID 99999999999999 not found")
 	})
 }
 

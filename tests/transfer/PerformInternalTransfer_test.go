@@ -258,7 +258,7 @@ func (suite *PerformInternalTransferTestSuite) TestFromAccountNotFound() {
 		assert.Equal(t, http.StatusNotFound, responseRecorder.Code)
 
 		response := testutils.DecodeErrorResponse(t, responseRecorder)
-		testutils.AssertFieldError(t, response, "message", "Account not found")
+		testutils.AssertFieldError(t, response, "message", "Account with ID 99999999999999 not found")
 	})
 }
 
@@ -313,7 +313,7 @@ func (suite *PerformInternalTransferTestSuite) TestToAccountNotFound() {
 		assert.Equal(t, http.StatusNotFound, responseRecorder.Code)
 
 		response := testutils.DecodeErrorResponse(t, responseRecorder)
-		testutils.AssertFieldError(t, response, "message", "Account not found")
+		testutils.AssertFieldError(t, response, "message", "Account with ID 99999999999999 not found")
 	})
 }
 

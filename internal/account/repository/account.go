@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -90,10 +91,17 @@ func (r *accountRepository) GetAccount(requestCtx context.Context, dbExecutor bu
 
 	err := query.Scan(requestCtx)
 	if err != nil {
+		var errMsg string
+		if options.AccountID != nil {
+			errMsg = fmt.Sprintf("Account with ID %d not found", *options.AccountID)
+		} else {
+			errMsg = "Account not found"
+		}
+
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &server.ApiError{
 				HttpStatusCode: http.StatusNotFound,
-				Message:        "Account not found",
+				Message:        errMsg,
 			}
 		}
 
