@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/skamranahmed/go-bank/cmd/server"
 	"github.com/skamranahmed/go-bank/internal/account/model"
+	"github.com/skamranahmed/go-bank/internal/account/types"
 	"github.com/skamranahmed/go-bank/pkg/logger"
 	"github.com/uptrace/bun"
 )
@@ -64,16 +65,30 @@ func (r *accountRepository) GetAccountsByUserID(requestCtx context.Context, dbEx
 	return accounts, nil
 }
 
-func (r *accountRepository) GetAccountByID(requestCtx context.Context, dbExecutor bun.IDB, accountID int64) (*model.Account, error) {
+func (r *accountRepository) GetAccount(requestCtx context.Context, dbExecutor bun.IDB, options types.AccountQueryOptions) (*model.Account, error) {
 	if dbExecutor == nil {
 		dbExecutor = r.db
 	}
 
 	var account model.Account
-	err := dbExecutor.NewSelect().
-		Model(&account).
-		Where("id = ?", accountID).
-		Scan(requestCtx)
+	query := dbExecutor.NewSelect().Model(&account)
+
+	// fetch only specified columns if any
+	if len(options.Columns) > 0 {
+		query = query.Column(options.Columns...)
+	}
+
+	// dynamically construct the query based on which fields are set
+	if options.AccountID != nil {
+		query = query.Where("id = ?", *options.AccountID)
+	}
+
+	// apply row locking if requested
+	if options.ForUpdate {
+		query = query.For("UPDATE")
+	}
+
+	err := query.Scan(requestCtx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &server.ApiError{
@@ -82,7 +97,7 @@ func (r *accountRepository) GetAccountByID(requestCtx context.Context, dbExecuto
 			}
 		}
 
-		logger.Error(requestCtx, "Error while fetching account for accountID: %+v, error: %+v", accountID, err)
+		logger.Error(requestCtx, "Error while finding account with options: %+v, error: %+v", options, err)
 		return nil, &server.ApiError{
 			HttpStatusCode: http.StatusInternalServerError,
 			Message:        "We couldn't fetch your account at the moment. Please try again later.",

@@ -90,7 +90,9 @@ func (c *accountController) GetAccountByID(ginCtx *gin.Context) {
 		return
 	}
 
-	account, err := c.accountService.GetAccountByID(requestCtx, nil, accountID)
+	account, err := c.accountService.GetAccount(requestCtx, nil, types.AccountQueryOptions{
+		AccountID: &accountID,
+	})
 	if err != nil {
 		server.SendErrorResponse(ginCtx, err)
 		return

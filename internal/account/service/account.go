@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/skamranahmed/go-bank/internal/account/model"
 	"github.com/skamranahmed/go-bank/internal/account/repository"
+	"github.com/skamranahmed/go-bank/internal/account/types"
 	"github.com/uptrace/bun"
 )
 
@@ -45,12 +46,12 @@ func (s *accountService) GetAccountsByUserID(requestCtx context.Context, dbExecu
 	return s.accountRepository.GetAccountsByUserID(requestCtx, dbExecutor, userID)
 }
 
-func (s *accountService) GetAccountByID(requestCtx context.Context, dbExecutor bun.IDB, accountID int64) (*model.Account, error) {
+func (s *accountService) GetAccount(requestCtx context.Context, dbExecutor bun.IDB, options types.AccountQueryOptions) (*model.Account, error) {
 	if dbExecutor == nil {
 		dbExecutor = s.db
 	}
 
-	return s.accountRepository.GetAccountByID(requestCtx, dbExecutor, accountID)
+	return s.accountRepository.GetAccount(requestCtx, dbExecutor, options)
 }
 
 func (s *accountService) generateAccountID() int64 {
