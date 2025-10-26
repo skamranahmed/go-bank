@@ -1,0 +1,49 @@
+---
+- id: a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d
+  created_at: '2025-09-13 17:26:13.237292+00'
+  updated_at: '2025-09-13 17:26:13.237292+00'
+  email: testuser1@example.com
+  username: test_user_1
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+- id: b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e
+  created_at: '2025-09-14 10:00:00.000000+00'
+  updated_at: '2025-09-14 10:00:00.000000+00'
+  email: testuser2@example.com
+  username: test_user_2
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+- id: c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f
+  created_at: '2025-09-15 12:00:00.000000+00'
+  updated_at: '2025-09-15 12:00:00.000000+00'
+  email: testuser3@example.com
+  username: test_user_3
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+- id: d3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f
+  created_at: '2025-09-16 12:00:00.000000+00'
+  updated_at: '2025-09-16 12:00:00.000000+00'
+  email: testuser4@example.com
+  username: test_user_4
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+- id: e3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f
+  created_at: '2025-09-16 12:00:00.000000+00'
+  updated_at: '2025-09-16 12:00:00.000000+00'
+  email: testuser5@example.com
+  username: test_user_5
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+- id: f3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f
+  created_at: '2025-09-16 12:00:00.000000+00'
+  updated_at: '2025-09-16 12:00:00.000000+00'
+  email: testuser6@example.com
+  username: test_user_6
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"
+
+- id: a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5e
+  created_at: '2025-09-16 12:00:00.000000+00'
+  updated_at: '2025-09-16 12:00:00.000000+00'
+  email: testuser7@example.com
+  username: test_user_7
+  password: "$argon2id$v=19$m=65536,t=1,p=8$QXPHsNRgKjFTnLVQuSdQzA$WQAsruIErMOQi4hShdQHkrQ/MO5Zwgij8zfXvliI6Xg"

@@ -50,7 +50,7 @@ func messageForTag(jsonFieldName string, fieldError validator.FieldError) string
 		return fmt.Sprintf("%s must be at least %s characters", jsonFieldName, fieldParam)
 
 	case "gt":
-		return fmt.Sprintf("%s must be at greater than %s", jsonFieldName, fieldParam)
+		return fmt.Sprintf("%s must be greater than %s", jsonFieldName, fieldParam)
 
 	case "email":
 		return fmt.Sprintf("%v is not a valid email", fieldValue)

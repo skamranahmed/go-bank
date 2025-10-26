@@ -322,6 +322,7 @@ func allModels() []interface{} {
 	return []interface{}{
 		(*userModel.User)(nil),
 		(*accountModel.Account)(nil),
+		(*accountModel.Transaction)(nil),
 		// add new models here
 	}
 }
