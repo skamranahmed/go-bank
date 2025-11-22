@@ -25,6 +25,12 @@ type Transaction struct {
 
 	// Type of transaction: DEBIT, CREDIT
 	Type TransactionType `bun:"type,notnull"`
+
+	// SourceName indicates the source of the transaction, e.g. 'transfers'
+	SourceName TransactionSourceName `bun:"source_name,notnull"`
+
+	// SourceID is the ID of the source entity that generated this transaction (e.g. transfer ID)
+	SourceID uuid.UUID `bun:"source_id,notnull,type:uuid"`
 }
 
 type TransactionType string
@@ -32,4 +38,10 @@ type TransactionType string
 const (
 	Debit  TransactionType = "DEBIT"
 	Credit TransactionType = "CREDIT"
+)
+
+type TransactionSourceName string
+
+const (
+	TransactionSourceTransfers TransactionSourceName = "transfers"
 )
