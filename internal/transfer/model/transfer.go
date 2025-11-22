@@ -1,0 +1,47 @@
+package model
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/skamranahmed/go-bank/internal/account/model"
+	"github.com/uptrace/bun"
+)
+
+type Transfer struct {
+	bun.BaseModel `bun:"table:transfers"`
+
+	ID        uuid.UUID `bun:"id,pk,notnull,type:uuid,default:gen_random_uuid()"`
+	CreatedAt time.Time `bun:"created_at,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"updated_at,notnull,default:now()"`
+
+	Type TransferType `bun:"type,notnull"`
+
+	FromAccountID *int64         `bun:"from_account_id"` // nullable for EXTERNAL_INBOUND transfers
+	FromAccount   *model.Account `bun:"rel:belongs-to,join:from_account_id=id"`
+	ToAccountID   *int64         `bun:"to_account_id"` // nullable for EXTERNAL_OUTBOUND transfers
+	ToAccount     *model.Account `bun:"rel:belongs-to,join:to_account_id=id"`
+
+	// Amount is stored in the smallest currency unit (paise for INR)
+	Amount int64 `bun:"amount,notnull"`
+
+	Status TransferStatus `bun:"status,notnull"`
+}
+
+type TransferType string
+
+const (
+	// Transfer between accounts within our own bank (go-bank)
+	Internal TransferType = "INTERNAL"
+	// Transfer coming from an external bank to an account in our bank (go-bank)
+	ExternalInbound TransferType = "EXTERNAL_INBOUND"
+	// Transfer going from an account in our bank (go-bank) to an external bank
+	ExternalOutbound TransferType = "EXTERNAL_OUTBOUND"
+)
+
+type TransferStatus string
+
+const (
+	Completed TransferStatus = "COMPLETED"
+	Failed    TransferStatus = "FAILED"
+)
