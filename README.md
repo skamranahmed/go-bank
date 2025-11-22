@@ -31,6 +31,10 @@ The application uses a **role-based execution model** allowing horizontal scalin
 
 Each domain follows **Clean Architecture** with consistent layers: controllers, services, repositories, and models.
 
+### Database Schema (In Progress)
+
+View the current database schema diagram: [here](https://dbdiagram.io/d/bank-67aea215263d6cf9a01e5ff8)
+
 ---
 
 ## ✨ Features
