@@ -9,18 +9,22 @@ import (
 	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	accountTypes "github.com/skamranahmed/go-bank/internal/account/types"
+	transferModel "github.com/skamranahmed/go-bank/internal/transfer/model"
+	transferRepository "github.com/skamranahmed/go-bank/internal/transfer/repository"
 	"github.com/uptrace/bun"
 )
 
 type transferService struct {
-	db             *bun.DB
-	accountService accountService.AccountService
+	db                 *bun.DB
+	accountService     accountService.AccountService
+	transferRepository transferRepository.TransferRepository
 }
 
-func NewTransferService(db *bun.DB, accountService accountService.AccountService) TransferService {
+func NewTransferService(db *bun.DB, accountService accountService.AccountService, transferRepository transferRepository.TransferRepository) TransferService {
 	return &transferService{
-		db:             db,
-		accountService: accountService,
+		db:                 db,
+		accountService:     accountService,
+		transferRepository: transferRepository,
 	}
 }
 
@@ -29,7 +33,7 @@ func (s *transferService) CreateInternalTransfer(
 	dbExecutor bun.IDB,
 	senderUserID uuid.UUID,
 	fromAccountID, toAccountID, transferAmount int64,
-) (*accountModel.Transaction, error) {
+) (*transferModel.Transfer, error) {
 	if dbExecutor == nil {
 		dbExecutor = s.db
 	}
@@ -93,6 +97,12 @@ func (s *transferService) CreateInternalTransfer(
 		}
 	}
 
+	// create transfer record
+	transferRecord, err := s.createTransferRecord(requestCtx, dbExecutor, transferModel.TransferTypeInternal, &fromAccountID, &toAccountID, transferAmount)
+	if err != nil {
+		return nil, err
+	}
+
 	// update the balance of the sender's account (debit)
 	updatedBalanceAfterDebit := senderAccount.Balance - transferAmount
 	senderAccount, err = s.accountService.UpdateAccount(requestCtx, dbExecutor, senderAccount.ID, accountTypes.AccountUpdateOptions{
@@ -107,7 +117,9 @@ func (s *transferService) CreateInternalTransfer(
 		AccountID:    senderAccount.ID,
 		Amount:       transferAmount,
 		BalanceAfter: senderAccount.Balance,
-		Type:         accountModel.Debit, // debit transaction
+		Type:         accountModel.Debit,                      // debit transaction
+		SourceName:   accountModel.TransactionSourceTransfers, // transaction record is created due to a transfer
+		SourceID:     transferRecord.ID,
 	}
 	transactionRecordForSenderAccount, err = s.accountService.CreateTransactionRecord(requestCtx, dbExecutor, transactionRecordForSenderAccount)
 	if err != nil {
@@ -128,12 +140,36 @@ func (s *transferService) CreateInternalTransfer(
 		AccountID:    receiverAccount.ID,
 		Amount:       transferAmount,
 		BalanceAfter: receiverAccount.Balance,
-		Type:         accountModel.Credit,
+		Type:         accountModel.Credit,                     // credit transaction
+		SourceName:   accountModel.TransactionSourceTransfers, // transaction record is created due to a transfer
+		SourceID:     transferRecord.ID,
 	}
 	_, err = s.accountService.CreateTransactionRecord(requestCtx, dbExecutor, transactionRecordForReceiverAccount)
 	if err != nil {
 		return nil, err
 	}
 
-	return transactionRecordForSenderAccount, nil
+	return transferRecord, nil
+}
+
+func (s *transferService) createTransferRecord(
+	requestCtx context.Context,
+	dbExecutor bun.IDB,
+	transferType transferModel.TransferType,
+	fromAccountID, toAccountID *int64,
+	amount int64,
+) (*transferModel.Transfer, error) {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	record := &transferModel.Transfer{
+		FromAccountID: fromAccountID,
+		ToAccountID:   toAccountID,
+		Type:          transferType,
+		Amount:        amount,
+		Status:        transferModel.TransferStatusCompleted,
+	}
+
+	return s.transferRepository.CreateTransferRecord(requestCtx, dbExecutor, record)
 }

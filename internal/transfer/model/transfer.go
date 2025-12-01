@@ -32,16 +32,16 @@ type TransferType string
 
 const (
 	// Transfer between accounts within our own bank (go-bank)
-	Internal TransferType = "INTERNAL"
+	TransferTypeInternal TransferType = "INTERNAL"
 	// Transfer coming from an external bank to an account in our bank (go-bank)
-	ExternalInbound TransferType = "EXTERNAL_INBOUND"
+	TransferTypeExternalInbound TransferType = "EXTERNAL_INBOUND"
 	// Transfer going from an account in our bank (go-bank) to an external bank
-	ExternalOutbound TransferType = "EXTERNAL_OUTBOUND"
+	TransferTypeExternalOutbound TransferType = "EXTERNAL_OUTBOUND"
 )
 
 type TransferStatus string
 
 const (
-	Completed TransferStatus = "COMPLETED"
-	Failed    TransferStatus = "FAILED"
+	TransferStatusCompleted TransferStatus = "COMPLETED"
+	TransferStatusFailed    TransferStatus = "FAILED"
 )

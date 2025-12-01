@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/skamranahmed/go-bank/cmd/middleware"
 	"github.com/skamranahmed/go-bank/cmd/server"
-	"github.com/skamranahmed/go-bank/internal/account/model"
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	accountTypes "github.com/skamranahmed/go-bank/internal/account/types"
+	transferModel "github.com/skamranahmed/go-bank/internal/transfer/model"
 	transferService "github.com/skamranahmed/go-bank/internal/transfer/service"
 	"github.com/skamranahmed/go-bank/internal/transfer/types"
 	"github.com/skamranahmed/go-bank/pkg/database"
@@ -88,9 +88,9 @@ func (c *transferController) PerformInternalTransfer(ginCtx *gin.Context) {
 		return
 	}
 
-	var senderAccountTransaction *model.Transaction
+	var transferRecord *transferModel.Transfer
 	err = database.RunInTransaction(requestCtx, "createInternalTransfer", c.db, nil, func(txCtx context.Context, tx bun.Tx) error {
-		senderAccountTransaction, err = c.transferService.CreateInternalTransfer(
+		transferRecord, err = c.transferService.CreateInternalTransfer(
 			txCtx,
 			tx,
 			fromAccount.UserID,
@@ -106,10 +106,10 @@ func (c *transferController) PerformInternalTransfer(ginCtx *gin.Context) {
 	}
 
 	// transform to DTO and return response
-	transactionDto := accountTypes.TransformToTransactionDto(senderAccountTransaction)
+	transferDto := types.TransformToTransferDto(transferRecord)
 	server.SendSuccessResponse(ginCtx, http.StatusOK, types.InternalTransferResponse{
 		Data: types.InternalTransferResponseData{
-			Transaction: *transactionDto,
+			Transfer: *transferDto,
 		},
 	})
 }

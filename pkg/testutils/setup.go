@@ -13,6 +13,7 @@ import (
 	"github.com/skamranahmed/go-bank/config"
 	"github.com/skamranahmed/go-bank/internal"
 	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
+	transferModel "github.com/skamranahmed/go-bank/internal/transfer/model"
 	userModel "github.com/skamranahmed/go-bank/internal/user/model"
 	"github.com/skamranahmed/go-bank/pkg/cache"
 	"github.com/skamranahmed/go-bank/pkg/logger"
@@ -323,6 +324,7 @@ func allModels() []interface{} {
 		(*userModel.User)(nil),
 		(*accountModel.Account)(nil),
 		(*accountModel.Transaction)(nil),
+		(*transferModel.Transfer)(nil),
 		// add new models here
 	}
 }

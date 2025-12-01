@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-testfixtures/testfixtures/v3"
 	accountModel "github.com/skamranahmed/go-bank/internal/account/model"
+	transferModel "github.com/skamranahmed/go-bank/internal/transfer/model"
 	"github.com/skamranahmed/go-bank/internal/transfer/types"
 	"github.com/skamranahmed/go-bank/pkg/testutils"
 	"github.com/stretchr/testify/assert"
@@ -345,7 +346,7 @@ func (suite *PerformInternalTransferTestSuite) TestInsufficientBalance() {
 }
 
 func (suite *PerformInternalTransferTestSuite) TestSuccessfulTransfer() {
-	suite.T().Run("successful transfer creates transaction records and updates balances", func(t *testing.T) {
+	suite.T().Run("successful transfer creates transfer and transaction records and updates balances", func(t *testing.T) {
 		userID := "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"
 
 		accessToken, err := suite.app.Services.AuthenticationService.CreateAccessToken(t.Context(), userID)
@@ -386,13 +387,15 @@ func (suite *PerformInternalTransferTestSuite) TestSuccessfulTransfer() {
 		err = json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
-		// verify transaction in response
-		assert.NotEmpty(t, response.Data.Transaction.ID)
-		assert.Equal(t, int64(12345678901234), response.Data.Transaction.AccountID)
-		assert.Equal(t, transferAmount, response.Data.Transaction.Amount)
-		assert.Equal(t, string(accountModel.Debit), response.Data.Transaction.Type)
-		assert.Equal(t, senderAccountBefore.Balance-transferAmount, response.Data.Transaction.BalanceAfter)
-		assert.NotZero(t, response.Data.Transaction.CreatedAt)
+		// verify transfer in response
+		assert.NotEmpty(t, response.Data.Transfer.ID)
+		assert.Equal(t, transferModel.TransferTypeInternal, response.Data.Transfer.Type)
+		assert.Equal(t, int64Ptr(12345678901234), response.Data.Transfer.FromAccountID)
+		assert.Equal(t, int64Ptr(11111111111111), response.Data.Transfer.ToAccountID)
+		assert.Equal(t, transferAmount, response.Data.Transfer.Amount)
+		assert.Equal(t, transferModel.TransferStatusCompleted, response.Data.Transfer.Status)
+		assert.NotZero(t, response.Data.Transfer.CreatedAt)
+		assert.NotZero(t, response.Data.Transfer.UpdatedAt)
 
 		// verify sender account balance updated
 		var senderAccountAfter accountModel.Account
@@ -411,6 +414,19 @@ func (suite *PerformInternalTransferTestSuite) TestSuccessfulTransfer() {
 			Scan(t.Context())
 		assert.NoError(t, err)
 		assert.Equal(t, receiverAccountBefore.Balance+transferAmount, receiverAccountAfter.Balance)
+
+		// verify transfer record exists in database
+		var transfer transferModel.Transfer
+		err = suite.app.Db.NewSelect().
+			Model(&transfer).
+			Where("id = ?", response.Data.Transfer.ID).
+			Scan(t.Context())
+		assert.NoError(t, err)
+		assert.Equal(t, transferModel.TransferTypeInternal, transfer.Type)
+		assert.Equal(t, int64Ptr(12345678901234), transfer.FromAccountID)
+		assert.Equal(t, int64Ptr(11111111111111), transfer.ToAccountID)
+		assert.Equal(t, transferAmount, transfer.Amount)
+		assert.Equal(t, transferModel.TransferStatusCompleted, transfer.Status)
 
 		// verify transaction record for sender account exists
 		var senderTransaction accountModel.Transaction
@@ -466,7 +482,14 @@ func (suite *PerformInternalTransferTestSuite) TestTransferBetweenDifferentAccou
 		var response types.InternalTransferResponse
 		err = json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.NotEmpty(t, response.Data.Transaction.ID)
+		assert.NotEmpty(t, response.Data.Transfer.ID)
+		assert.Equal(t, transferModel.TransferTypeInternal, response.Data.Transfer.Type)
+		assert.Equal(t, int64Ptr(12345678901234), response.Data.Transfer.FromAccountID)
+		assert.Equal(t, int64Ptr(98765432109876), response.Data.Transfer.ToAccountID)
+		assert.Equal(t, transferAmount, response.Data.Transfer.Amount)
+		assert.Equal(t, transferModel.TransferStatusCompleted, response.Data.Transfer.Status)
+		assert.NotZero(t, response.Data.Transfer.CreatedAt)
+		assert.NotZero(t, response.Data.Transfer.UpdatedAt)
 	})
 
 	suite.T().Run("transfer from CURRENT_ACCOUNT to SAVINGS_ACCOUNT", func(t *testing.T) {
@@ -494,7 +517,14 @@ func (suite *PerformInternalTransferTestSuite) TestTransferBetweenDifferentAccou
 		var response types.InternalTransferResponse
 		err = json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.NotEmpty(t, response.Data.Transaction.ID)
+		assert.NotEmpty(t, response.Data.Transfer.ID)
+		assert.Equal(t, transferModel.TransferTypeInternal, response.Data.Transfer.Type)
+		assert.Equal(t, int64Ptr(98765432109876), response.Data.Transfer.FromAccountID)
+		assert.Equal(t, int64Ptr(12345678901234), response.Data.Transfer.ToAccountID)
+		assert.Equal(t, transferAmount, response.Data.Transfer.Amount)
+		assert.Equal(t, transferModel.TransferStatusCompleted, response.Data.Transfer.Status)
+		assert.NotZero(t, response.Data.Transfer.CreatedAt)
+		assert.NotZero(t, response.Data.Transfer.UpdatedAt)
 	})
 }
 
@@ -541,7 +571,6 @@ func (suite *PerformInternalTransferTestSuite) TestTransferExactBalance() {
 			Scan(t.Context())
 		assert.NoError(t, err)
 		assert.Equal(t, int64(0), senderAccountAfter.Balance)
-		assert.Equal(t, int64(0), response.Data.Transaction.BalanceAfter)
 	})
 }
 
@@ -581,19 +610,19 @@ func (suite *PerformInternalTransferTestSuite) TestResponseFormat() {
 		dataObject, ok := data.(map[string]interface{})
 		assert.True(t, ok, "data should be an object")
 
-		// verify transaction field exists
-		transaction, exists := dataObject["transaction"]
-		assert.True(t, exists, "data should contain 'transaction' field")
-		assert.NotNil(t, transaction)
+		// verify transfer field exists
+		transfer, exists := dataObject["transfer"]
+		assert.True(t, exists, "data should contain 'transfer' field")
+		assert.NotNil(t, transfer)
 
-		// verify transaction fields
-		transactionObject, ok := transaction.(map[string]interface{})
-		assert.True(t, ok, "transaction should be an object")
+		// verify transfer fields
+		transferObject, ok := transfer.(map[string]interface{})
+		assert.True(t, ok, "transfer should be an object")
 
-		requiredFields := []string{"id", "created_at", "account_id", "amount", "type", "balance_after"}
+		requiredFields := []string{"id", "created_at", "updated_at", "type", "from_account_id", "to_account_id", "amount", "status"}
 		for _, field := range requiredFields {
-			_, exists := transactionObject[field]
-			assert.True(t, exists, "transaction should contain field: %s", field)
+			_, exists := transferObject[field]
+			assert.True(t, exists, "transfer should contain field: %s", field)
 		}
 	})
 }
@@ -668,7 +697,7 @@ func (suite *PerformInternalTransferTestSuite) TestConcurrentTransfersFromSameSe
 		// close the error channel and collect all errors
 		close(errChan)
 		for err := range errChan {
-			t.Error(err)
+			assert.NoError(t, err)
 		}
 
 		// verify sender's account balance after
@@ -754,7 +783,7 @@ func (suite *PerformInternalTransferTestSuite) TestConcurrentTransfersInvolvingS
 					senderAccountID = int64(secondUserAccountID)
 					receiverAccountID = int64(firstUserAccountID)
 
-					// transfer 20000 in each transfer from second account, i.e total debit = 25 * 10000 = 500000
+					// transfer 20000 in each transfer from second account, i.e total debit = 25 * 20000 = 500000
 					transferAmount = int64(transferAmountFromSecondAccountInEachTransfer)
 				}
 
@@ -790,7 +819,7 @@ func (suite *PerformInternalTransferTestSuite) TestConcurrentTransfersInvolvingS
 		// close the error channel and collect all errors
 		close(errChan)
 		for err := range errChan {
-			t.Error(err)
+			assert.NoError(t, err)
 		}
 
 		// verify first user's account balance after

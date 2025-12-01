@@ -5,6 +5,7 @@ import (
 	accountService "github.com/skamranahmed/go-bank/internal/account/service"
 	authenticationService "github.com/skamranahmed/go-bank/internal/authentication/service"
 	healthzService "github.com/skamranahmed/go-bank/internal/healthz/service"
+	transferRepository "github.com/skamranahmed/go-bank/internal/transfer/repository"
 	transferService "github.com/skamranahmed/go-bank/internal/transfer/service"
 	userRepository "github.com/skamranahmed/go-bank/internal/user/repository"
 	userService "github.com/skamranahmed/go-bank/internal/user/service"
@@ -38,7 +39,8 @@ func BootstrapServices(db *bun.DB, cacheClient cache.CacheClient, taskEnqueuer t
 	accountService := accountService.NewAccountService(db, accountRepository)
 
 	// transfer service
-	transferService := transferService.NewTransferService(db, accountService)
+	transferRepository := transferRepository.NewTransferRepository(db)
+	transferService := transferService.NewTransferService(db, accountService, transferRepository)
 
 	return &Services{
 		AccountService:        accountService,
