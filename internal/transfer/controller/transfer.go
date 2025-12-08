@@ -113,3 +113,69 @@ func (c *transferController) PerformInternalTransfer(ginCtx *gin.Context) {
 		},
 	})
 }
+
+func (c *transferController) PerformExternalTransfer(ginCtx *gin.Context) {
+	requestCtx := ginCtx.Request.Context()
+
+	// extract user ID from the request context
+	userID, ok := requestCtx.Value(middleware.ContextUserIDKey).(string)
+	if !ok || userID == "" {
+		server.SendErrorResponse(ginCtx, &server.ApiError{
+			HttpStatusCode: http.StatusUnauthorized,
+			Message:        "User not authenticated",
+		})
+		return
+	}
+
+	var payload types.ExternalTransferRequest
+	isSuccess := server.BindAndValidateIncomingRequestBody(ginCtx, &payload)
+	if !isSuccess {
+		return
+	}
+
+	// existence check for the sender account
+	fromAccount, err := c.accountService.GetAccount(requestCtx, nil, accountTypes.AccountQueryOptions{
+		AccountID: &payload.Data.FromAccountID,
+		Columns:   []string{"user_id"},
+	})
+	if err != nil {
+		server.SendErrorResponse(ginCtx, err)
+		return
+	}
+
+	// authorization check that sender account belongs to the authenticated user
+	if fromAccount.UserID.String() != userID {
+		server.SendErrorResponse(ginCtx, &server.ApiError{
+			HttpStatusCode: http.StatusForbidden,
+			Message:        "You are not authorized to perform transfer from this account",
+		})
+		return
+	}
+
+	var transferRecord *transferModel.Transfer
+	err = database.RunInTransaction(requestCtx, "createExternalTransfer", c.db, nil, func(txCtx context.Context, tx bun.Tx) error {
+		transferRecord, err = c.transferService.CreateExternalTransfer(
+			txCtx,
+			tx,
+			fromAccount.UserID,
+			payload.Data.FromAccountID,
+			*payload.Data.Amount,
+			payload.Data.ExternalRecipient.IFSCCode,
+			payload.Data.ExternalRecipient.AccountID,
+			payload.Data.ExternalRecipient.Name,
+		)
+		return err
+	})
+	if err != nil {
+		server.SendErrorResponse(ginCtx, err)
+		return
+	}
+
+	// transform to DTO and return response
+	transferDto := types.TransformToTransferDto(transferRecord)
+	server.SendSuccessResponse(ginCtx, http.StatusOK, types.ExternalTransferResponse{
+		Data: types.ExternalTransferResponseData{
+			Transfer: *transferDto,
+		},
+	})
+}

@@ -19,4 +19,5 @@ type Dependency struct {
 func Register(router *gin.Engine, dependency Dependency) {
 	transferController := newTransferController(dependency)
 	router.POST("/v1/transfers/internal", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), transferController.PerformInternalTransfer)
+	router.POST("/v1/transfers/external", middleware.AuthMiddleware(middleware.AuthMandatory, dependency.AuthenticationService), transferController.PerformExternalTransfer)
 }

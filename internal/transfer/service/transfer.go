@@ -98,7 +98,15 @@ func (s *transferService) CreateInternalTransfer(
 	}
 
 	// create transfer record
-	transferRecord, err := s.createTransferRecord(requestCtx, dbExecutor, transferModel.TransferTypeInternal, &fromAccountID, &toAccountID, transferAmount)
+	transferRecord, err := s.createTransferRecord(
+		requestCtx,
+		dbExecutor,
+		transferModel.TransferTypeInternal,
+		&fromAccountID,
+		&toAccountID,
+		transferAmount,
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -152,12 +160,88 @@ func (s *transferService) CreateInternalTransfer(
 	return transferRecord, nil
 }
 
+func (s *transferService) CreateExternalTransfer(
+	requestCtx context.Context,
+	dbExecutor bun.IDB,
+	senderUserID uuid.UUID,
+	fromAccountID, transferAmount int64,
+	externalRecipientBankIFSCCode string,
+	externalRecipientBankAccountID int64,
+	externalRecipientName string,
+) (*transferModel.Transfer, error) {
+	if dbExecutor == nil {
+		dbExecutor = s.db
+	}
+
+	var senderAccount *accountModel.Account
+	senderAccount, err := s.accountService.GetAccount(requestCtx, dbExecutor, accountTypes.AccountQueryOptions{
+		AccountID: &fromAccountID,
+		ForUpdate: true, // lock the row for update
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if senderAccount.Balance < transferAmount {
+		return nil, &server.ApiError{
+			HttpStatusCode: http.StatusBadRequest,
+			Message:        "You do not have sufficient balance in your account to perform the transfer",
+		}
+	}
+
+	// external recipient details
+	externalParty := make(map[string]interface{})
+	externalParty["ifsc_code"] = externalRecipientBankIFSCCode
+	externalParty["account_id"] = externalRecipientBankAccountID
+	externalParty["name"] = externalRecipientName
+
+	// create transfer record
+	transferRecord, err := s.createTransferRecord(
+		requestCtx,
+		dbExecutor,
+		transferModel.TransferTypeExternalOutbound,
+		&fromAccountID,
+		nil,
+		transferAmount,
+		externalParty,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// update the balance of the sender's account (debit)
+	updatedBalanceAfterDebit := senderAccount.Balance - transferAmount
+	senderAccount, err = s.accountService.UpdateAccount(requestCtx, dbExecutor, senderAccount.ID, accountTypes.AccountUpdateOptions{
+		NewBalance: &updatedBalanceAfterDebit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// create transaction record for sender account
+	transactionRecordForSenderAccount := &accountModel.Transaction{
+		AccountID:    senderAccount.ID,
+		Amount:       transferAmount,
+		BalanceAfter: senderAccount.Balance,
+		Type:         accountModel.Debit,                      // debit transaction
+		SourceName:   accountModel.TransactionSourceTransfers, // transaction record is created due to a transfer
+		SourceID:     transferRecord.ID,
+	}
+	transactionRecordForSenderAccount, err = s.accountService.CreateTransactionRecord(requestCtx, dbExecutor, transactionRecordForSenderAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	return transferRecord, nil
+}
+
 func (s *transferService) createTransferRecord(
 	requestCtx context.Context,
 	dbExecutor bun.IDB,
 	transferType transferModel.TransferType,
 	fromAccountID, toAccountID *int64,
 	amount int64,
+	externalParty map[string]interface{},
 ) (*transferModel.Transfer, error) {
 	if dbExecutor == nil {
 		dbExecutor = s.db
@@ -169,6 +253,7 @@ func (s *transferService) createTransferRecord(
 		Type:          transferType,
 		Amount:        amount,
 		Status:        transferModel.TransferStatusCompleted,
+		ExternalParty: externalParty,
 	}
 
 	return s.transferRepository.CreateTransferRecord(requestCtx, dbExecutor, record)
