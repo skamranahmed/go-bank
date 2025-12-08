@@ -26,6 +26,12 @@ type Transfer struct {
 	Amount int64 `bun:"amount,notnull"`
 
 	Status TransferStatus `bun:"status,notnull"`
+
+	// Fields:
+	// 	"ifsc_code": "XXXX" (the ifsc code of the external bank)
+	// 	"account_id": "XXXX" (the account number of the sender or recipient of the external bank)
+	// 	"name": "Sender name or recipient name"
+	ExternalParty map[string]interface{} `bun:"external_party,default:null"` // nullable, holds info about external party for EXTERNAL_INBOUND and EXTERNAL_OUTBOUND transfers
 }
 
 type TransferType string
